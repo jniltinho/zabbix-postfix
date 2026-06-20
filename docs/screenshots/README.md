@@ -6,7 +6,7 @@ This directory contains the architecture and data flow diagrams for the `zabbix-
 
 ## 1. General Operation (Macro View)
 
-Macro view diagram showing how the Zabbix Server periodically interacts with the Zabbix Agent on the mail server.
+A beginner-friendly (layman) macro-view diagram showing how the Zabbix Server periodically interacts with the Zabbix Agent on the mail server, detailing how the active configuration file routes requests to update log statistics, read metrics from the cache, or check the mail queue depth.
 
 ![General Operation](./how-it-works.jpg)
 
