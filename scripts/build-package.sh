@@ -26,28 +26,40 @@ fi
 
 mkdir -p "${DIST_DIR}"
 
-fpm \
-    -s dir \
-    -t "${FORMAT}" \
-    --name "${PKG_NAME}" \
-    --version "${VERSION}" \
-    --architecture "${ARCH}" \
-    --description "Postfix monitoring for Zabbix — pygtail, pflogsumm and check_mailq (Go binaries)" \
-    --maintainer "Nilton OS <jniltinho@gmail.com>" \
-    --url "https://github.com/jniltinho/zabbix-postfix" \
-    --license "MIT" \
-    --depends "sudo" \
-    --after-install "scripts/pkg/postinst" \
-    --before-remove "scripts/pkg/prerm" \
-    --package "${DIST_DIR}/" \
-    --force \
-    "pygtail/dist/pygtail=/usr/local/bin/pygtail" \
-    "pflogsumm/dist/pflogsumm=/usr/local/bin/pflogsumm" \
-    "check_mailq/dist/check_mailq=/usr/local/bin/check_mailq" \
-    "zabbix_postfix_passive.sh=/usr/local/sbin/zabbix_postfix_passive.sh" \
-    "zabbix_postfix_passive.conf=/usr/share/zabbix-postfix/zabbix_postfix_passive.conf" \
+FPM_ARGS=(
+    -s dir
+    -t "${FORMAT}"
+    --name "${PKG_NAME}"
+    --version "${VERSION}"
+    --architecture "${ARCH}"
+    --description "Postfix monitoring for Zabbix — pygtail, pflogsumm and check_mailq (Go binaries)"
+    --maintainer "Nilton OS <jniltinho@gmail.com>"
+    --url "https://github.com/jniltinho/zabbix-postfix"
+    --license "MIT"
+    --depends "sudo"
+    --after-install "scripts/pkg/postinst"
+    --before-remove "scripts/pkg/prerm"
+    --package "${DIST_DIR}/"
+    --force
+    "pygtail/dist/pygtail=/usr/local/bin/pygtail"
+    "pflogsumm/dist/pflogsumm=/usr/local/bin/pflogsumm"
+    "check_mailq/dist/check_mailq=/usr/local/bin/check_mailq"
+    "zabbix_postfix_passive.sh=/usr/local/sbin/zabbix_postfix_passive.sh"
+    "zabbix_postfix_passive.conf=/usr/share/zabbix-postfix/zabbix_postfix_passive.conf"
     "template_postfix_passive.xml=/usr/share/zabbix-postfix/template_postfix_passive.xml"
+)
+
+if [[ "${FORMAT}" == "tar" ]]; then
+    FPM_ARGS+=("scripts/pkg/install.sh=/usr/share/zabbix-postfix/install.sh")
+fi
+
+RUBYOPT="-Eutf-8:utf-8" fpm "${FPM_ARGS[@]}"
+
+if [[ "${FORMAT}" == "tar" ]]; then
+    gzip -f "${DIST_DIR}"/*.tar
+fi
 
 echo ""
 echo "Package ready in ${DIST_DIR}/"
-ls -lh "${DIST_DIR}"/*.${FORMAT} 2>/dev/null || true
+EXT="${FORMAT}"; [[ "${FORMAT}" == "tar" ]] && EXT="tar.gz"
+ls -lh "${DIST_DIR}"/*.${EXT} 2>/dev/null || true

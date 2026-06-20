@@ -57,7 +57,7 @@ jobs:
           mv dist/zabbix-postfix-install.tar.gz \
              dist/zabbix-postfix_${{ steps.version.outputs.VERSION }}_linux_amd64.tar.gz
 
-      - name: Build .deb and .rpm via Docker
+      - name: Build .deb, .rpm and .tar.gz via Docker
         run: |
           VERSION=${{ steps.version.outputs.VERSION }}
           DOCKER_BUILDKIT=1 docker build \
@@ -66,12 +66,14 @@ jobs:
             --build-arg VERSION="${VERSION}" \
             -o dist/ \
             .
+          mv dist/zabbix-postfix.tar.gz \
+             dist/zabbix-postfix_${VERSION}_pkg_linux_amd64.tar.gz
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/zabbix-postfix_*_linux_amd64.tar.gz
+            dist/zabbix-postfix*.tar.gz
             dist/pygtail_*_linux_amd64.tar.gz
             dist/pflogsumm_*_linux_amd64.tar.gz
             dist/check_mailq_*_linux_amd64.tar.gz

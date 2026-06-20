@@ -71,7 +71,8 @@ ARG VERSION=0.0.0
 
 RUN mkdir -p dist && \
     bash scripts/build-package.sh deb "${VERSION}" && \
-    bash scripts/build-package.sh rpm "${VERSION}"
+    bash scripts/build-package.sh rpm "${VERSION}" && \
+    bash scripts/build-package.sh tar "${VERSION}"
 
 # ── export stage: binaries only ──────────────────────────────────────────────
 FROM scratch AS export-bins
@@ -79,7 +80,8 @@ COPY --from=builder /src/pygtail/dist/pygtail       /pygtail
 COPY --from=builder /src/pflogsumm/dist/pflogsumm   /pflogsumm
 COPY --from=builder /src/check_mailq/dist/check_mailq /check_mailq
 
-# ── export stage: .deb and .rpm packages ─────────────────────────────────────
+# ── export stage: .deb, .rpm and .tar.gz packages ────────────────────────────
 FROM scratch AS export-pkg
 COPY --from=packager /src/dist/*.deb /
 COPY --from=packager /src/dist/*.rpm /
+COPY --from=packager /src/dist/*.tar.gz /
