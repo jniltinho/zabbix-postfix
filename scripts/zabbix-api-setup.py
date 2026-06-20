@@ -21,9 +21,7 @@ import urllib.request
 from pathlib import Path
 
 REPO_ROOT    = Path(__file__).resolve().parent.parent
-SCRIPTS_DIR  = Path(__file__).resolve().parent
 TEMPLATE_XML = REPO_ROOT / "template_postfix_passive.xml"
-RESET_SCRIPT_FILE = SCRIPTS_DIR / "zabbix-reset-offset.sh"
 TEMPLATE_NAME = "Template App Postfix by Zabbix agent (passive)"
 
 # Threshold macros — 2x the template defaults
@@ -162,14 +160,10 @@ def step_script(zbx: ZabbixAPI, group_id: str) -> None:
             return
         group_id = result[0]["groupid"]
 
-    if not RESET_SCRIPT_FILE.exists():
-        raise FileNotFoundError(f"Reset script not found: {RESET_SCRIPT_FILE}")
-    command = RESET_SCRIPT_FILE.read_text()
-
     info(f"Creating 'Reset Postfix offset' script (groupid={group_id})...")
     zbx.call("script.create", {
         "name":        "Reset Postfix offset",
-        "command":     command,
+        "command":     "sudo /opt/zabbix_postfix/zabbix-reset-offset.sh",
         "scope":       "2",   # manual host action
         "type":        "0",   # script (bash)
         "execute_on":  "0",   # Zabbix agent

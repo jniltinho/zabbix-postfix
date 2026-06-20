@@ -45,6 +45,7 @@ FPM_ARGS=(
     "pflogsumm/dist/pflogsumm=/opt/zabbix_postfix/pflogsumm"
     "check_mailq/dist/check_mailq=/opt/zabbix_postfix/check_mailq"
     "zabbix_postfix_passive.sh=/opt/zabbix_postfix/zabbix_postfix_passive.sh"
+    "scripts/zabbix-reset-offset.sh=/opt/zabbix_postfix/zabbix-reset-offset.sh"
     "zabbix_postfix_passive.conf=/usr/share/zabbix-postfix/zabbix_postfix_passive.conf"
     "template_postfix_passive.xml=/usr/share/zabbix-postfix/template_postfix_passive.xml"
 )

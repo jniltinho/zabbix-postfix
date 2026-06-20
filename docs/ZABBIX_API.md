@@ -170,8 +170,10 @@ To override a macro on a specific host after setup:
 
 ## 5. Reset Postfix offset script
 
-The **Reset Postfix offset** script is created by the `--script` step and runs
-directly on the Zabbix agent of the selected host.
+The **Reset Postfix offset** script is created by the `--script` step of
+`scripts/zabbix-api-setup.py`. It calls `sudo /opt/zabbix_postfix/zabbix-reset-offset.sh`
+on the Zabbix agent, resetting the `pygtail` offset to the end of `mail.log`
+and clearing the stats file.
 
 **What it does:**
 1. Reads the current inode and size of `/var/log/mail.log`
@@ -182,16 +184,60 @@ directly on the Zabbix agent of the selected host.
 `pygtail` reads the entire existing log on its first run. Run this script to
 reset the baseline so only new log entries are counted going forward.
 
-**How to run:**
+### Prerequisites on each mail server
+
+**1. Deploy the reset script**
+
+Installed automatically by the `.deb`/`.rpm` package at
+`/opt/zabbix_postfix/zabbix-reset-offset.sh`.
+
+If installing manually from the tarball, copy and set permissions:
+
+```bash
+scp scripts/zabbix-reset-offset.sh mailserver:/opt/zabbix_postfix/
+ssh mailserver chmod +x /opt/zabbix_postfix/zabbix-reset-offset.sh
+```
+
+**2. Add sudoers entry**
+
+Added automatically by the `.deb`/`.rpm` `postinst` script.
+
+The `/tmp/zabbix-postfix-passive-*.dat` files are owned by `root` (written by
+the passive script which runs via `sudo`). The reset script must also run as root.
+If installing manually, add to `/etc/sudoers`:
+
+```
+zabbix ALL=(ALL) NOPASSWD: /opt/zabbix_postfix/zabbix-reset-offset.sh
+```
+
+Without this entry the script fails with `Permission denied` on the offset and
+stats files.
+
+**3. Enable `system.run` on the Zabbix agent**
+
+Add to `/etc/zabbix/zabbix_agent2.conf`:
+
+```
+AllowKey=system.run[*]
+```
+
+Then restart the agent:
+
+```bash
+systemctl restart zabbix-agent2
+```
+
+### How to run
+
 Monitoring → Hosts → click a mail server → **Scripts → Reset Postfix offset**
 
 Expected output:
 ```
-Reset OK: inode=263421 offset=475203925
+Reset OK: inode=263421 offset=477237894
 ```
 
-After running, counters restart from zero. The `avg(5m)` trigger will stabilize
-within 5 minutes and false alarms will stop.
+After running, counters restart from zero. The `avg(5m)` trigger stabilizes
+within 5 minutes and false alarms stop.
 
 ---
 

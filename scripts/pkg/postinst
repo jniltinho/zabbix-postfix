@@ -3,6 +3,7 @@ set -e
 
 CONF_SRC="/usr/share/zabbix-postfix/zabbix_postfix_passive.conf"
 SUDOERS_LINE="zabbix ALL=(ALL) NOPASSWD: /opt/zabbix_postfix/zabbix_postfix_passive.sh"
+SUDOERS_RESET="zabbix ALL=(ALL) NOPASSWD: /opt/zabbix_postfix/zabbix-reset-offset.sh"
 
 # Detect Zabbix agent conf dir (agent2 → agentd.conf.d → agentd.d)
 ZBX_CONF_DIR=""
@@ -21,6 +22,7 @@ for pair in \
 done
 
 chmod +x /opt/zabbix_postfix/zabbix_postfix_passive.sh
+chmod +x /opt/zabbix_postfix/zabbix-reset-offset.sh
 
 if [ -n "$ZBX_CONF_DIR" ]; then
     install -m 0644 "$CONF_SRC" "${ZBX_CONF_DIR}/zabbix_postfix_passive.conf"
@@ -31,6 +33,9 @@ fi
 # Add sudoers entry (idempotent)
 if ! grep -qF "$SUDOERS_LINE" /etc/sudoers 2>/dev/null; then
     echo "$SUDOERS_LINE" >> /etc/sudoers
+fi
+if ! grep -qF "$SUDOERS_RESET" /etc/sudoers 2>/dev/null; then
+    echo "$SUDOERS_RESET" >> /etc/sudoers
 fi
 
 # Restart agent

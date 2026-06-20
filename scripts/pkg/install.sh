@@ -49,7 +49,8 @@ echo "==> binaries installed to ${BIN_DIR}"
 # Install script
 mkdir -p "${SCRIPT_DIR}"
 install -m 0755 "${SRC_SBIN}/zabbix_postfix_passive.sh" "${SCRIPT_DIR}/zabbix_postfix_passive.sh"
-echo "==> script installed to ${SCRIPT_DIR}"
+install -m 0755 "${SRC_SBIN}/zabbix-reset-offset.sh"   "${SCRIPT_DIR}/zabbix-reset-offset.sh"
+echo "==> scripts installed to ${SCRIPT_DIR}"
 
 # Install shared files (template + generated conf)
 mkdir -p "${DEST_SHARE}"
@@ -87,9 +88,14 @@ fi
 
 # Add sudoers entry (idempotent)
 SUDOERS_LINE="zabbix ALL=(ALL) NOPASSWD: ${SCRIPT_DIR}/zabbix_postfix_passive.sh"
+SUDOERS_RESET="zabbix ALL=(ALL) NOPASSWD: ${SCRIPT_DIR}/zabbix-reset-offset.sh"
 if ! grep -qF "$SUDOERS_LINE" /etc/sudoers 2>/dev/null; then
     echo "$SUDOERS_LINE" >> /etc/sudoers
     echo "==> sudoers entry added"
+fi
+if ! grep -qF "$SUDOERS_RESET" /etc/sudoers 2>/dev/null; then
+    echo "$SUDOERS_RESET" >> /etc/sudoers
+    echo "==> sudoers reset entry added"
 fi
 
 # Restart agent
