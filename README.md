@@ -97,7 +97,7 @@ No Go, Python, Perl, or any runtime dependency needed on the agent host.
 | `pflogsumm` | Parses Postfix logs and outputs counters |
 | `check_mailq` | Returns live queue depth as a single integer |
 | `zabbix_postfix_passive.sh` | Orchestrates the three binaries for Zabbix |
-| `template_postfix_passive.xml` | Zabbix 6.0 template |
+| `template_postfix_passive.xml` | Zabbix 7.0 template |
 
 ---
 
