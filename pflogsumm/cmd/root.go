@@ -20,6 +20,7 @@ var (
 	formatFlag  = "human"
 	zabbixFlag  bool
 	mailqFlag   bool
+	lastFlag    string
 	version     = "0.1.0"
 )
 
@@ -42,6 +43,7 @@ func NewRootCmd() *cobra.Command {
 	root.Flags().StringVar(&formatFlag, "format", "human", "output format: human, keyvalue, json, summary")
 	root.Flags().BoolVar(&zabbixFlag, "zabbix", false, "output key=value metrics (for Zabbix monitoring)")
 	root.Flags().BoolVar(&mailqFlag, "mailq", false, "append current mail queue after report")
+	root.Flags().StringVarP(&lastFlag, "last", "l", "", "only count log lines from the last duration (e.g. 5m, 1h, 30s)")
 
 	root.SetHelpFunc(func(cmd *cobra.Command, _ []string) {
 		fmt.Print(`Summarise Postfix mail.log and output metric counts
@@ -64,6 +66,7 @@ Go-specific flags:
   --format string   output format: human, keyvalue, json, summary (default "human")
   --zabbix          output key=value metrics for Zabbix (overrides --format)
   --mailq           append current mail queue after report
+  --last duration   only count lines from the last N minutes/hours (e.g. 5m, 1h)
 `)
 	})
 
@@ -148,7 +151,17 @@ func run(cmd *cobra.Command, args []string) error {
 		r = io.MultiReader(readers...)
 	}
 
-	metrics, err := parser.ParseFiltered(r, day)
+	var metrics parser.Metrics
+	var err error
+	if lastFlag != "" {
+		d, err := time.ParseDuration(lastFlag)
+		if err != nil {
+			return fmt.Errorf("--last: invalid duration %q (use e.g. 5m, 1h, 30s)", lastFlag)
+		}
+		metrics, err = parser.ParseLastN(r, d)
+	} else {
+		metrics, err = parser.ParseFiltered(r, day)
+	}
 	if err != nil {
 		return fmt.Errorf("parsing log: %w", err)
 	}

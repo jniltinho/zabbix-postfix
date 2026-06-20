@@ -57,8 +57,8 @@ readvalue () {
 if [ -n "$1" ]; then
         readvalue "$1"
 else
-        # parse today's mail log with pflogsumm and cache the result
-        "${PFLOGSUMM}" --zabbix -d today -u 0 --no_bounce_detail --no_deferral_detail \
+        # parse last 5 minutes of mail log and cache the result
+        "${PFLOGSUMM}" --zabbix --last 5m -u 0 --no_bounce_detail --no_deferral_detail \
                 --no_reject_detail --no_smtpd_warnings --no_no_msg_size \
                 "${MAILLOG}" > "${TEMPFILE}" 2>/dev/null
 

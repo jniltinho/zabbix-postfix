@@ -55,6 +55,110 @@ func Parse(r io.Reader) (Metrics, error) {
 	return ParseFiltered(r, "")
 }
 
+// newMetrics returns a Metrics value with all maps initialised.
+func newMetrics() Metrics {
+	return Metrics{
+		DelivDomains:   make(map[string]*DomainDelivStat),
+		RecvDomains:    make(map[string]*DomainRecvStat),
+		SendersByCount: make(map[string]*AddrStat),
+		RecipsByCount:  make(map[string]*AddrStat),
+		RejectDetail:   make(map[string]int64),
+		DeferralDetail: make(map[string]map[string]int64),
+		BounceDetail:   make(map[string]map[string]int64),
+		DailyStats:     make(map[string]*DailyStat),
+		Warnings:       make(map[string]map[string]int64),
+		FatalErrors:    make(map[string]map[string]int64),
+		Panics:         make(map[string]map[string]int64),
+		MasterMsgs:     make(map[string]map[string]int64),
+	}
+}
+
+// finalise fills in derived counts on m after all lines have been parsed.
+func finalise(m *Metrics) {
+	m.DayCnt = len(m.DailyStats)
+	m.UniqueSenders = int64(len(m.SendersByCount))
+	m.UniqueSendingHosts = int64(len(m.RecvDomains))
+	m.UniqueRecipients = int64(len(m.RecipsByCount))
+	recipHosts := make(map[string]struct{})
+	for addr := range m.RecipsByCount {
+		if idx := strings.LastIndex(addr, "@"); idx >= 0 {
+			recipHosts[strings.ToLower(addr[idx+1:])] = struct{}{}
+		}
+	}
+	m.UniqueRecipHosts = int64(len(recipHosts))
+}
+
+// extractTimestamp parses the full timestamp from a log line.
+// Supports traditional syslog ("Jun 20 16:05:23") and RFC3339 ("2026-06-20T16:05:23").
+func extractTimestamp(line string, now time.Time) (time.Time, bool) {
+	// RFC3339: "2026-06-20T16:05:23..."
+	if len(line) >= 19 && line[4] == '-' && line[7] == '-' && line[10] == 'T' {
+		t, err := time.ParseInLocation("2006-01-02T15:04:05", line[:19], now.Location())
+		if err == nil {
+			return t, true
+		}
+		return time.Time{}, false
+	}
+	// Syslog: "Jun 20 16:05:23" or "Jun  5 16:05:23"
+	if len(line) < 15 {
+		return time.Time{}, false
+	}
+	mon, ok := monthNums[line[0:3]]
+	if !ok {
+		return time.Time{}, false
+	}
+	dayStr := strings.TrimSpace(line[4:6])
+	day, err := strconv.Atoi(dayStr)
+	if err != nil || day < 1 || day > 31 {
+		return time.Time{}, false
+	}
+	if line[9] != ':' || line[12] != ':' {
+		return time.Time{}, false
+	}
+	hour, e1 := strconv.Atoi(line[7:9])
+	min, e2 := strconv.Atoi(line[10:12])
+	sec, e3 := strconv.Atoi(line[13:15])
+	if e1 != nil || e2 != nil || e3 != nil {
+		return time.Time{}, false
+	}
+	t := time.Date(now.Year(), time.Month(mon), day, hour, min, sec, 0, now.Location())
+	// If the result is more than a minute in the future, assume last year's log.
+	if t.After(now.Add(time.Minute)) {
+		t = t.AddDate(-1, 0, 0)
+	}
+	return t, true
+}
+
+// ParseLastN reads Postfix log lines from r, counting only lines logged
+// within the last d duration (e.g. 5 minutes, 1 hour).
+func ParseLastN(r io.Reader, d time.Duration) (Metrics, error) {
+	now := time.Now()
+	cutoff := now.Add(-d)
+
+	m := newMetrics()
+	queueSizes := make(map[string]int64)
+	deferredSeen := make(map[string]bool)
+	queueSenders := make(map[string]string)
+
+	scanner := bufio.NewScanner(r)
+	buf := make([]byte, 64*1024)
+	scanner.Buffer(buf, 1024*1024)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		t, ok := extractTimestamp(line, now)
+		if !ok || t.Before(cutoff) {
+			continue
+		}
+		hour := extractHour(line)
+		dateKey := extractDate(line)
+		parseLine(line, &m, queueSizes, deferredSeen, queueSenders, hour, dateKey)
+	}
+
+	finalise(&m)
+	return m, scanner.Err()
+}
+
 // ParseFiltered reads Postfix log lines from r, optionally restricting to
 // "today" or "yesterday". Any other non-empty value returns an error.
 func ParseFiltered(r io.Reader, day string) (Metrics, error) {
@@ -70,24 +174,9 @@ func ParseFiltered(r io.Reader, day string) (Metrics, error) {
 		rfc3339Pfx = t.Format("2006-01-02")
 	}
 
-	m := Metrics{
-		DelivDomains:   make(map[string]*DomainDelivStat),
-		RecvDomains:    make(map[string]*DomainRecvStat),
-		SendersByCount: make(map[string]*AddrStat),
-		RecipsByCount:  make(map[string]*AddrStat),
-		RejectDetail:   make(map[string]int64),
-		DeferralDetail: make(map[string]map[string]int64),
-		BounceDetail:   make(map[string]map[string]int64),
-		DailyStats:     make(map[string]*DailyStat),
-		Warnings:       make(map[string]map[string]int64),
-		FatalErrors:    make(map[string]map[string]int64),
-		Panics:         make(map[string]map[string]int64),
-		MasterMsgs:     make(map[string]map[string]int64),
-	}
+	m := newMetrics()
 	queueSizes := make(map[string]int64)
 	deferredSeen := make(map[string]bool)
-	// queueSenders["host:qid"] = smtpd client hostname (for rcvdMsg tracking)
-	// queueSenders["from:qid"] = already-processed flag
 	queueSenders := make(map[string]string)
 
 	scanner := bufio.NewScanner(r)
@@ -106,20 +195,7 @@ func ParseFiltered(r io.Reader, day string) (Metrics, error) {
 		parseLine(line, &m, queueSizes, deferredSeen, queueSenders, hour, dateKey)
 	}
 
-	m.DayCnt = len(m.DailyStats)
-
-	m.UniqueSenders = int64(len(m.SendersByCount))
-	m.UniqueSendingHosts = int64(len(m.RecvDomains))
-	m.UniqueRecipients = int64(len(m.RecipsByCount))
-
-	recipHosts := make(map[string]struct{})
-	for addr := range m.RecipsByCount {
-		if idx := strings.LastIndex(addr, "@"); idx >= 0 {
-			recipHosts[strings.ToLower(addr[idx+1:])] = struct{}{}
-		}
-	}
-	m.UniqueRecipHosts = int64(len(recipHosts))
-
+	finalise(&m)
 	return m, scanner.Err()
 }
 
