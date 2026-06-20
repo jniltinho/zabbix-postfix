@@ -45,7 +45,11 @@ func NewRootCmd() *cobra.Command {
 	root.Flags().BoolVar(&mailqFlag, "mailq", false, "append current mail queue after report")
 	root.Flags().StringVarP(&lastFlag, "last", "l", "", "only count log lines from the last duration (e.g. 5m, 1h, 30s)")
 
-	root.SetHelpFunc(func(cmd *cobra.Command, _ []string) {
+	root.SetHelpFunc(func(cmd *cobra.Command, args []string) {
+		if cmd.Name() != "pflogsumm" {
+			cmd.Usage()
+			return
+		}
 		fmt.Print(`Summarise Postfix mail.log and output metric counts
 
 Usage:
@@ -122,6 +126,8 @@ Go-specific flags:
 	// String-valued compat flags.
 	root.Flags().String("syslog-name", "", "compatibility flag (ignored)")
 	_ = root.Flags().MarkHidden("syslog-name")
+
+	root.AddCommand(NewCheckMailqCmd())
 
 	return root
 }

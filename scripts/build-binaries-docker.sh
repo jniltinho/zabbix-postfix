@@ -6,7 +6,6 @@
 #
 # Produces:
 #   pflogsumm/dist/pflogsumm
-#   check_mailq/dist/check_mailq
 
 set -euo pipefail
 
@@ -24,7 +23,7 @@ fi
 echo "==> Building binaries with Docker (docs/Dockerfile)"
 DOCKER_BUILDKIT=1 docker build -f "${DOCKERFILE}" --target export-bins -o "${EXPORT_DIR}" "${ROOT}"
 
-for mod in pflogsumm check_mailq; do
+for mod in pflogsumm; do
     mkdir -p "${ROOT}/${mod}/dist"
     install -m 0755 "${EXPORT_DIR}/${mod}" "${ROOT}/${mod}/dist/${mod}"
 done
@@ -33,4 +32,4 @@ rm -rf "${EXPORT_DIR}"
 
 echo ""
 echo "==> Binaries ready:"
-ls -lh pflogsumm/dist/pflogsumm check_mailq/dist/check_mailq
+ls -lh pflogsumm/dist/pflogsumm

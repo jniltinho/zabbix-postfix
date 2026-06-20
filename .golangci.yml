@@ -20,7 +20,7 @@ linters:
 
 linters-settings:
   goimports:
-    local-prefixes: pflogsumm,check_mailq
+    local-prefixes: pflogsumm
   revive:
     rules:
       - name: exported

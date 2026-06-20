@@ -30,13 +30,10 @@ WORKDIR /src
 # Download deps first (cache-friendly layer)
 COPY Makefile ./
 COPY pflogsumm/go.mod pflogsumm/go.sum pflogsumm/
-COPY check_mailq/go.mod check_mailq/go.sum check_mailq/
 
-RUN cd pflogsumm && go mod download && \
-    cd ../check_mailq && go mod download
+RUN cd pflogsumm && go mod download
 
 COPY pflogsumm/ pflogsumm/
-COPY check_mailq/ check_mailq/
 
 RUN make clean build
 
@@ -55,7 +52,6 @@ WORKDIR /src
 
 # Copy everything needed by build-package.sh and fpm
 COPY --from=builder /src/pflogsumm/dist/pflogsumm   pflogsumm/dist/pflogsumm
-COPY --from=builder /src/check_mailq/dist/check_mailq check_mailq/dist/check_mailq
 COPY Makefile ./
 COPY zabbix_postfix_passive.sh ./
 COPY zabbix_postfix_passive.conf ./
@@ -73,7 +69,6 @@ RUN mkdir -p dist && \
 # ── export stage: binaries only ──────────────────────────────────────────────
 FROM scratch AS export-bins
 COPY --from=builder /src/pflogsumm/dist/pflogsumm   /pflogsumm
-COPY --from=builder /src/check_mailq/dist/check_mailq /check_mailq
 
 # ── export stage: .deb, .rpm and .tar.gz packages ────────────────────────────
 FROM scratch AS export-pkg

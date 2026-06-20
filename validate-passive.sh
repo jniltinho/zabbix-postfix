@@ -2,7 +2,7 @@
 # Integration validation for zabbix_postfix_passive.sh + Go binaries.
 # Run inside Dockerfile.test-passive (ubuntu:24.04) or on a host with
 # /opt/zabbix_postfix/{pflogsumm,check_mailq} and /var/log/mail.log present.
-# Expected: Results: 17 passed, 0 failed
+# Expected: Results: 15 passed, 0 failed
 set -e
 PASS=0
 FAIL=0
@@ -11,15 +11,12 @@ ok()   { echo "  PASS: $1"; PASS=$((PASS+1)); }
 fail() { echo "  FAIL: $1"; FAIL=$((FAIL+1)); }
 
 echo ""
-echo "=== Task 0.1: Go binaries present and executable ==="
-for bin in /opt/zabbix_postfix/pflogsumm /opt/zabbix_postfix/check_mailq; do
-    [ -x "$bin" ] && ok "$bin" || fail "$bin missing"
-done
+echo "=== Task 0.1: Go binary present and executable ==="
+[ -x "/opt/zabbix_postfix/pflogsumm" ] && ok "/opt/zabbix_postfix/pflogsumm" || fail "/opt/zabbix_postfix/pflogsumm missing"
 
 echo ""
-echo "=== Task 0.1: Version checks ==="
-/opt/zabbix_postfix/pflogsumm --version  2>&1 | grep -q "0\." && ok "pflogsumm version" || fail "pflogsumm version"
-/opt/zabbix_postfix/check_mailq --version 2>&1 | grep -q "0\." && ok "check_mailq version" || fail "check_mailq version"
+echo "=== Task 0.1: Version check ==="
+/opt/zabbix_postfix/pflogsumm --version 2>&1 | grep -q "0\." && ok "pflogsumm version" || fail "pflogsumm version"
 
 echo ""
 echo "=== Task 5.1: Update mode — pipeline runs and exits 0 ==="
@@ -75,10 +72,10 @@ echo "  Go received=$GO_RCV  Perl received=$PERL_RCV"
 [ "$GO_RCV" = "$PERL_RCV" ] && ok "received matches Perl" || fail "received mismatch: go=$GO_RCV perl=$PERL_RCV"
 
 echo ""
-echo "=== Task 5.4: check_mailq returns integer ==="
-val=$(/opt/zabbix_postfix/check_mailq --zabbix 2>&1 || true)
-echo "  check_mailq output: $val"
-[[ "$val" =~ ^[0-9]+$ ]] && ok "check_mailq returns integer" || ok "check_mailq ran (mailq may not be configured)"
+echo "=== Task 5.4: check-mailq subcommand returns integer ==="
+val=$(/opt/zabbix_postfix/pflogsumm check-mailq --zabbix 2>&1 || true)
+echo "  check-mailq output: $val"
+[[ "$val" =~ ^[0-9]+$ ]] && ok "check-mailq returns integer" || ok "check-mailq ran (mailq may not be configured)"
 
 echo ""
 echo "=== Task 1.2: Env override respected ==="

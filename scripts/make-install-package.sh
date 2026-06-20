@@ -46,7 +46,7 @@ elif [[ ${DO_BUILD} -eq 1 ]]; then
     make build
 fi
 
-BINARIES=( pflogsumm check_mailq )
+BINARIES=( pflogsumm )
 for bin in "${BINARIES[@]}"; do
     if [[ ! -x "${ROOT}/${bin}/dist/${bin}" ]]; then
         echo "ERROR: ${bin}/dist/${bin} not found."
@@ -63,7 +63,6 @@ rm -rf "${PKG_DIR}"
 mkdir -p "${PKG_DIR}/bin" "${PKG_DIR}/scripts"
 
 install -m 0755 "${ROOT}/pflogsumm/dist/pflogsumm"       "${PKG_DIR}/bin/"
-install -m 0755 "${ROOT}/check_mailq/dist/check_mailq"   "${PKG_DIR}/bin/"
 
 install -m 0755 "${ROOT}/install_postfix_template_zabbix_passive.sh" "${PKG_DIR}/"
 install -m 0755 "${ROOT}/zabbix_postfix_passive.sh"                  "${PKG_DIR}/"
@@ -77,7 +76,7 @@ zabbix-postfix — install package
 
 Contents
 --------
-  bin/                                    Go binaries (pflogsumm, check_mailq)
+  bin/                                    Go binary (pflogsumm)
   install_postfix_template_zabbix_passive.sh   Agent installer
   zabbix_postfix_passive.sh               Passive check script
   zabbix_postfix_passive.conf             Zabbix agent UserParameters
@@ -88,7 +87,7 @@ Mail server (Zabbix agent host)
 -------------------------------
   1. Copy this folder to the mail server, e.g. /tmp/zabbix-postfix-install
   2. Install binaries:
-       sudo install -m 0755 bin/pflogsumm bin/check_mailq /opt/zabbix_postfix/
+       sudo install -m 0755 bin/pflogsumm /opt/zabbix_postfix/
   3. Run the agent installer (from this directory):
        cd /tmp/zabbix-postfix-install
        sudo bash install_postfix_template_zabbix_passive.sh

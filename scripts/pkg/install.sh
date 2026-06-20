@@ -6,7 +6,7 @@
 #   sudo bash /tmp/usr/share/zabbix-postfix/install.sh [--bin-dir DIR] [--script-dir DIR]
 #
 # Options:
-#   --bin-dir DIR     Install binaries (pflogsumm, check_mailq) to DIR
+#   --bin-dir DIR     Install pflogsumm binary to DIR
 #                     Default: /opt/zabbix_postfix
 #   --script-dir DIR  Install zabbix_postfix_passive.sh to DIR
 #                     Default: /opt/zabbix_postfix
@@ -42,7 +42,6 @@ DEST_SHARE="/usr/share/zabbix-postfix"
 # Install binaries
 mkdir -p "${BIN_DIR}"
 install -m 0755 "${SRC_BIN}/pflogsumm"   "${BIN_DIR}/pflogsumm"
-install -m 0755 "${SRC_BIN}/check_mailq" "${BIN_DIR}/check_mailq"
 echo "==> binaries installed to ${BIN_DIR}"
 
 # Install script

@@ -5,7 +5,7 @@
 #   sudo ./configure_paths.sh --bin-dir DIR [--script-dir DIR]
 #
 # Options:
-#   --bin-dir DIR     Directory where pflogsumm and check_mailq live
+#   --bin-dir DIR     Directory where pflogsumm lives
 #                     Default: /opt/zabbix_postfix
 #   --script-dir DIR  Directory where zabbix_postfix_passive.sh is installed
 #                     Default: /opt/zabbix_postfix
@@ -53,12 +53,12 @@ fi
 
 # ---------- check binaries ----------
 info "Checking binaries in ${BIN_DIR}..."
-for bin in pflogsumm check_mailq; do
+for bin in pflogsumm; do
     if [[ ! -x "${BIN_DIR}/${bin}" ]]; then
         fail "${BIN_DIR}/${bin} not found or not executable"
     fi
 done
-ok "All binaries found in ${BIN_DIR}"
+ok "pflogsumm found in ${BIN_DIR}"
 
 # ---------- update zabbix_postfix_passive.sh ----------
 if [[ ! -f "${SCRIPT_FILE}" ]]; then

@@ -32,7 +32,7 @@ FPM_ARGS=(
     --name "${PKG_NAME}"
     --version "${VERSION}"
     --architecture "${ARCH}"
-    --description "Postfix monitoring for Zabbix — pflogsumm and check_mailq (Go binaries)"
+    --description "Postfix monitoring for Zabbix — pflogsumm Go binary"
     --maintainer "Nilton OS <jniltinho@gmail.com>"
     --url "https://github.com/jniltinho/zabbix-postfix"
     --license "MIT"
@@ -42,7 +42,6 @@ FPM_ARGS=(
     --package "${DIST_DIR}/"
     --force
     "pflogsumm/dist/pflogsumm=/opt/zabbix_postfix/pflogsumm"
-    "check_mailq/dist/check_mailq=/opt/zabbix_postfix/check_mailq"
     "zabbix_postfix_passive.sh=/opt/zabbix_postfix/zabbix_postfix_passive.sh"
     "scripts/zabbix-reset-offset.sh=/opt/zabbix_postfix/zabbix-reset-offset.sh"
     "zabbix_postfix_passive.conf=/usr/share/zabbix-postfix/zabbix_postfix_passive.conf"

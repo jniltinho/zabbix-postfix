@@ -1,4 +1,4 @@
-MODULES     := pflogsumm check_mailq
+MODULES     := pflogsumm
 INSTALL_DIR := /opt/zabbix_postfix
 HOST        ?= mx01
 VERSION     ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "0.0.0")
