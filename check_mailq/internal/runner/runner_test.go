@@ -9,7 +9,7 @@ import (
 )
 
 func TestRun_MissingBinary_ReturnsError(t *testing.T) {
-	_, err := runner.Run("/nonexistent/mailq-binary", 5*time.Second)
+	_, err := runner.Run("/nonexistent/mailq-binary", 5*time.Second, false)
 	if err == nil {
 		t.Error("expected error for missing binary, got nil")
 	}
@@ -21,7 +21,7 @@ func TestRun_Timeout_ReturnsError(t *testing.T) {
 	if err != nil || sleepBin == nil {
 		t.Skip("/bin/sleep not available")
 	}
-	_, err = runner.Run("/bin/sleep 10", 100*time.Millisecond)
+	_, err = runner.Run("/bin/sleep 10", 100*time.Millisecond, false)
 	if err == nil {
 		t.Error("expected timeout error, got nil")
 	}
@@ -35,7 +35,7 @@ func TestRun_EchoOutput_ReturnsStdout(t *testing.T) {
 	}
 	// We can't easily test the full pipeline without a real mailq,
 	// but we verify that runner.Run returns stdout from a subprocess.
-	out, err := runner.Run(echoBin, 5*time.Second)
+	out, err := runner.Run(echoBin, 5*time.Second, false)
 	if err != nil {
 		t.Fatalf("Run with echo: %v", err)
 	}

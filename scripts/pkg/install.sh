@@ -57,7 +57,7 @@ install -m 0644 "${SRC_SHARE}/template_postfix_passive.xml" "${DEST_SHARE}/templ
 
 # Generate conf with actual paths
 cat > "${DEST_SHARE}/zabbix_postfix_passive.conf" <<EOF
-UserParameter=postfix.pfmailq,${BIN_DIR}/check_mailq
+UserParameter=postfix.pfmailq,${BIN_DIR}/check_mailq --zabbix
 UserParameter=postfix[*],sudo ${SCRIPT_DIR}/zabbix_postfix_passive.sh \$1
 UserParameter=postfix.update_data,sudo ${SCRIPT_DIR}/zabbix_postfix_passive.sh
 EOF

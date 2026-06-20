@@ -72,7 +72,7 @@ echo "  Go received=$GO_RCV  Perl received=$PERL_RCV"
 
 echo ""
 echo "=== Task 5.4: check_mailq returns integer ==="
-val=$(/usr/local/bin/check_mailq 2>&1 || true)
+val=$(/usr/local/bin/check_mailq --zabbix 2>&1 || true)
 echo "  check_mailq output: $val"
 [[ "$val" =~ ^[0-9]+$ ]] && ok "check_mailq returns integer" || ok "check_mailq ran (mailq may not be configured)"
 

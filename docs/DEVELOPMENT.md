@@ -48,7 +48,7 @@ not the raw total.
 ### UserParameters
 
 ```
-UserParameter=postfix.pfmailq,/usr/local/bin/check_mailq
+UserParameter=postfix.pfmailq,/usr/local/bin/check_mailq --zabbix
 UserParameter=postfix[*],sudo /usr/local/sbin/zabbix_postfix_passive.sh $1
 UserParameter=postfix.update_data,sudo /usr/local/sbin/zabbix_postfix_passive.sh
 ```

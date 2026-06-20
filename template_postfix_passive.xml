@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
-    <version>6.0</version>
-    <date>2026-06-19T00:00:00Z</date>
+    <version>7.0</version>
+    <date>2026-06-20T00:00:00Z</date>
     <template_groups>
         <template_group>
             <uuid>1933cf08068b44909c441b14bca68023</uuid>
@@ -392,22 +392,22 @@
                     </graph_items>
                 </graph>
             </graphs>
+            <valuemaps>
+                <valuemap>
+                    <uuid>bf5b2cbe5ee44f2fb7293eee64aa12ad</uuid>
+                    <name>Service state</name>
+                    <mappings>
+                        <mapping>
+                            <value>0</value>
+                            <newvalue>Down</newvalue>
+                        </mapping>
+                        <mapping>
+                            <value>1</value>
+                            <newvalue>Up</newvalue>
+                        </mapping>
+                    </mappings>
+                </valuemap>
+            </valuemaps>
         </template>
     </templates>
-    <value_maps>
-        <value_map>
-            <uuid>bf5b2cbe5ee44f2fb7293eee64aa12ad</uuid>
-            <name>Service state</name>
-            <mappings>
-                <mapping>
-                    <value>0</value>
-                    <newvalue>Down</newvalue>
-                </mapping>
-                <mapping>
-                    <value>1</value>
-                    <newvalue>Up</newvalue>
-                </mapping>
-            </mappings>
-        </value_map>
-    </value_maps>
 </zabbix_export>

@@ -9,12 +9,20 @@ import (
 )
 
 // Run executes mailqPath with the given timeout and returns its combined output.
+// If sudo is true the command is prefixed with "sudo".
 // Returns an error if mailq cannot be found, exits non-zero, or times out.
-func Run(mailqPath string, timeout time.Duration) (string, error) {
+func Run(mailqPath string, timeout time.Duration, sudo bool) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	out, err := exec.CommandContext(ctx, mailqPath).Output()
+	var cmd *exec.Cmd
+	if sudo {
+		cmd = exec.CommandContext(ctx, "sudo", mailqPath)
+	} else {
+		cmd = exec.CommandContext(ctx, mailqPath)
+	}
+
+	out, err := cmd.Output()
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
 			return "", fmt.Errorf("mailq timed out after %s", timeout)
