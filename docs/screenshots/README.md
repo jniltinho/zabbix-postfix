@@ -33,3 +33,12 @@ Internal email delivery flow in Postfix mapped against the respective metrics ca
 A visual dashboard summarizing sample Postfix traffic stats (delivered, blocked, deferred, bounced, and volume) with friendly, non-technical explanations of each term.
 
 ![Statistics Overview](./postfix_stats_infographic.jpg)
+
+---
+
+## 5. Postfix Zabbix Agent Metrics Reference
+
+A comprehensive visual reference diagram showing all 11 Postfix metrics captured by the agent, grouped logically (Inbound/Delivery, Queue & Problem, Rejections & Drops, and Traffic Volume) with their keys, units, and descriptions.
+
+![Metrics Reference](./postfix_metrics_reference.jpg)
+
