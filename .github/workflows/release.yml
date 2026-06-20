@@ -40,16 +40,19 @@ jobs:
       - name: Package Binaries
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
-          ARCHIVE_NAME="zabbix-postfix_${VERSION}_linux_amd64.tar.gz"
-          mkdir -p release
-          cp pygtail/dist/pygtail pflogsumm/dist/pflogsumm check_mailq/dist/check_mailq release/
-          tar -czvf "$ARCHIVE_NAME" -C release .
-          echo "ARCHIVE_NAME=$ARCHIVE_NAME" >> $GITHUB_ENV
+          for BIN in pygtail pflogsumm check_mailq; do
+            ARCHIVE="${BIN}_${VERSION}_linux_amd64.tar.gz"
+            mkdir -p "release/${BIN}"
+            cp "${BIN}/dist/${BIN}" "release/${BIN}/"
+            tar -czvf "$ARCHIVE" -C "release/${BIN}" .
+          done
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ env.ARCHIVE_NAME }}
+            pygtail_*_linux_amd64.tar.gz
+            pflogsumm_*_linux_amd64.tar.gz
+            check_mailq_*_linux_amd64.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
