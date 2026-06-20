@@ -22,7 +22,7 @@ template_postfix_passive.xml  ──poll──▶  zabbix_postfix_passive.conf
                                             ├─ postfix.update_data ──▶ zabbix_postfix_passive.sh
                                             ├─ postfix[received]     ──▶     │
                                             ├─ postfix[delivered]    ──▶     │
-                                            └─ postfix.pfmailq       ──▶ check_mailq
+                                            └─ postfix.pfmailq       ──▶ pflogsumm check-mailq
 ```
 
 ### Zabbix server
@@ -36,17 +36,14 @@ template_postfix_passive.xml  ──poll──▶  zabbix_postfix_passive.conf
 | File | Installed where | Role in Zabbix checks |
 |------|-----------------|----------------------|
 | [`zabbix_postfix_passive.conf`](../zabbix_postfix_passive.conf) | `/etc/zabbix/zabbix_agent2.d/` or `zabbix_agentd.conf.d/` | Registers three **UserParameters** so the agent knows how to answer Zabbix item keys: `postfix.update_data` (run the update pipeline), `postfix[*]` (read one metric from the stats file), and `postfix.pfmailq` (live queue depth). This is the bridge between Zabbix item keys and local commands. |
-| [`zabbix_postfix_passive.sh`](../zabbix_postfix_passive.sh) | `/opt/zabbix_postfix/` | Core orchestration script. **Without arguments:** tails new Postfix log lines (`pygtail`), parses them (`pflogsumm --zabbix`), and accumulates counters into the stats file — triggered by the `postfix.update_data` item every minute. **With a metric name** (e.g. `received`): reads that value from the stats file — triggered by `postfix[received]`, `postfix[delivered]`, etc. Requires `sudo` because it reads `/var/log/mail.log`. |
-| `pygtail` (Go binary) | `/opt/zabbix_postfix/pygtail` | Incremental log reader. On each `postfix.update_data` run, reads only **new** lines since the last poll and tracks log rotation via the offset file. Avoids re-parsing the entire mail log on every Zabbix cycle. |
-| `pflogsumm` (Go binary) | `/opt/zabbix_postfix/pflogsumm` | Postfix log parser. Consumes the new log lines from `pygtail` and outputs flat `key=value` metrics (`received`, `delivered`, `rejected`, …). The passive script adds these deltas to the persistent stats file. |
-| `check_mailq` (Go binary) | `/opt/zabbix_postfix/check_mailq` | Returns the current mail queue depth as a single integer. Called directly by `postfix.pfmailq` — no sudo, no stats file. Gives a **live** snapshot of backlog, unlike log-based counters which reflect historical activity. |
+| [`zabbix_postfix_passive.sh`](../zabbix_postfix_passive.sh) | `/opt/zabbix_postfix/` | Core orchestration script. **Without arguments:** parses the last 5 minutes of Postfix log lines (`pflogsumm --zabbix --last 5m`), and caches counters into the stats file — triggered by the `postfix.update_data` item every minute. **With a metric name** (e.g. `received`): reads that value from the stats file — triggered by `postfix[received]`, `postfix[delivered]`, etc. Requires `sudo` because it reads `/var/log/mail.log`. |
+| `pflogsumm` (Go binary) | `/opt/zabbix_postfix/pflogsumm` | Postfix log parser and queue checker. Outputs flat `key=value` metrics (`received`, `delivered`, `rejected`, …) when parsing logs, and returns the current mail queue depth as an integer under the `check-mailq` subcommand. |
 
 ### Runtime files (created automatically)
 
 | File | Location | Role in Zabbix checks |
 |------|----------|----------------------|
-| Offset file | `/tmp/zabbix-postfix-passive-offset.dat` | Stores where `pygtail` stopped reading the mail log. Ensures each `postfix.update_data` poll only processes new entries and survives log rotation. |
-| Stats file | `/tmp/zabbix-postfix-passive-statsfile.dat` | Persistent accumulator in `key;value` format (e.g. `received;142178`). Written by `postfix.update_data`, read by every `postfix[*]` item. Counters grow over the lifetime of the file; deleting it resets all log-based metrics to zero. |
+| Stats file | `/tmp/zabbix-postfix-passive-statsfile.dat` | Persistent cache file in `key=value` format (e.g. `received=142178`). Written by `postfix.update_data`, read by every `postfix[*]` item. |
 
 ### Sudoers entry (not a repo file)
 
@@ -61,16 +58,16 @@ template_postfix_passive.xml  ──poll──▶  zabbix_postfix_passive.conf
 | [`install_postfix_template_zabbix_passive.sh`](../install_postfix_template_zabbix_passive.sh) | Interactive installer on the mail server: verifies Go binaries, deploys the passive script and agent conf, adds the sudoers line, and restarts the agent. Does not import the template — that step is done on the Zabbix server. |
 | [`scripts/configure_paths.sh`](../scripts/configure_paths.sh) | Reconfigures binary and script paths in `zabbix_postfix_passive.conf` and `zabbix_postfix_passive.sh`. Default install path is `/opt/zabbix_postfix`; use `--bin-dir` and `--script-dir` to override. |
 | [`validate-passive.sh`](../validate-passive.sh) | Integration test script (CI / Docker). Confirms binaries, the update pipeline, stats file format, and read mode behave correctly before deployment. |
-| [`Makefile`](../Makefile) | Builds, tests, and installs the three Go binaries (`make build`, `make test`, `make install`). |
+| [`Makefile`](../Makefile) | Builds, tests, and installs the Go binary (`make build`, `make test`, `make install`). |
 | [`docs/Dockerfile`](Dockerfile) | Docker image (`golang:1.26.4-bookworm`) to compile binaries without Go 1.26.4 or UPX on the host. Used by `scripts/build-binaries-docker.sh`. |
 | [`scripts/build-binaries-docker.sh`](../scripts/build-binaries-docker.sh) | Runs the Docker build and copies compressed binaries into `*/dist/`. |
 | [`scripts/make-install-package.sh`](../scripts/make-install-package.sh) | Assembles `dist/zabbix-postfix-install/` (and optional `.tar.gz`) with binaries, agent config, installer, and Zabbix template. |
 
 ### How the pieces connect during a poll
 
-1. **Every 1 min** — Zabbix polls `postfix.update_data` → agent runs `zabbix_postfix_passive.sh` → `pygtail` reads new log lines → `pflogsumm --zabbix` parses them → counters are added to the stats file.
-2. **Every 3 min** — Zabbix polls `postfix[received]`, `postfix[delivered]`, `postfix[rejected]`, etc. → agent runs `zabbix_postfix_passive.sh <metric>` → script reads one line from the stats file and returns the integer.
-3. **Every 3 min** — Zabbix polls `postfix.pfmailq` → agent runs `check_mailq` → returns current queue size.
+1. **Every 1 min** — Zabbix polls `postfix.update_data` → agent runs `zabbix_postfix_passive.sh` → `pflogsumm` parses the last 5 minutes of logs → cached stats file is updated.
+2. **Every 3 min** — Zabbix polls `postfix[received]`, `postfix[delivered]`, `postfix[rejected]`, etc. → agent runs `zabbix_postfix_passive.sh <metric>` → script reads the cached value from the stats file and returns the integer.
+3. **Every 3 min** — Zabbix polls `postfix.pfmailq` → agent runs `pflogsumm check-mailq --zabbix` → returns current queue size.
 4. **Every 1 min** — Zabbix polls `net.tcp.service[smtp]` (built-in agent check, no zabbix-postfix file) → confirms Postfix is accepting SMTP connections.
 
 For installation steps and troubleshooting, see [HOWTO.md](HOWTO.md).

@@ -14,7 +14,7 @@ A beginner-friendly (layman) macro-view diagram showing how the Zabbix Server pe
 
 ## 2. Zabbix-Postfix Integration Flow
 
-Detailed diagram showing the interaction between the Zabbix Server/Agent, the helper Bash script, and the Go binaries (`pygtail` and `pflogsumm`) to incrementally read and accumulate log statistics.
+Detailed diagram showing the interaction between the Zabbix Server/Agent, the helper Bash script, and the Go binary (`pflogsumm`) to read log statistics and check the mail queue depth.
 
 ![Integration Flow](./postfix_zabbix_flow.jpg)
 
