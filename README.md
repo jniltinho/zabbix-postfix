@@ -70,5 +70,5 @@ See [HOWTO.md](./HOWTO.md) for the full installation guide.
 | Step | Status |
 |------|--------|
 | Go binaries | ✓ done — golden test matches Perl pflogsumm exactly |
-| Zabbix wiring | ✓ done — validated via Docker (19/19) and mx01 production |
+| Zabbix wiring | ✓ done — validated via Docker (19/19) |
 | Native Zabbix plugin | planned — `check_postfix` importing `pflogsumm/pkg/parser` |
