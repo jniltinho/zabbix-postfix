@@ -40,7 +40,7 @@ Import `template_postfix_passive.xml` and monitor:
 
 The template ships with **14 items**, **4 graphs**, and **4 triggers** (high queue, deferred spike, reject spike, SMTP down).
 
-![How it works](./docs/screenshots/how-it-works.png)
+![How it works](./docs/screenshots/how-it-works.jpg)
 
 *See also:*
 * [Zabbix-Postfix Integration Flow Diagram](./docs/screenshots/postfix_zabbix_flow.jpg)

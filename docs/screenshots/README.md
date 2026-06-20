@@ -8,7 +8,7 @@ This directory contains the architecture and data flow diagrams for the `zabbix-
 
 Macro view diagram showing how the Zabbix Server periodically interacts with the Zabbix Agent on the mail server.
 
-![General Operation](./how-it-works.png)
+![General Operation](./how-it-works.jpg)
 
 ---
 
