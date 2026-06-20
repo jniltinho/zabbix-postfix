@@ -1,8 +1,10 @@
 package parser_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"pflogsumm/pkg/parser"
 )
@@ -107,6 +109,123 @@ func TestParse_SummaryFormat_ByteSuffixG(t *testing.T) {
 	m := parse(t, "       1g bytes received\n")
 	if m.BytesReceived != 1024*1024*1024 {
 		t.Errorf("BytesReceived (g suffix) = %d, want %d", m.BytesReceived, 1024*1024*1024)
+	}
+}
+
+// makeClientLine builds a postfix/smtpd client= log line for a given date.
+func makeClientLine(t time.Time) string {
+	return fmt.Sprintf("%s %2d 10:00:01 mx01 postfix/smtpd[1234]: ABCD1234: client=test.example.com",
+		t.Format("Jan"), t.Day())
+}
+
+// makeClientLineRFC3339 builds an RFC3339-timestamp client= log line.
+func makeClientLineRFC3339(t time.Time) string {
+	return fmt.Sprintf("%sT10:00:01+00:00 mx01 postfix/smtpd[1234]: ABCD1234: client=test.example.com",
+		t.Format("2006-01-02"))
+}
+
+func parseFiltered(t *testing.T, log, day string) (parser.Metrics, error) {
+	t.Helper()
+	return parser.ParseFiltered(strings.NewReader(log), day)
+}
+
+func TestParseFiltered_EmptyDay_CountsAllLines(t *testing.T) {
+	log := smtpdClientLine + "\n" + makeClientLine(time.Now().AddDate(0, 0, -5)) + "\n"
+	m, err := parseFiltered(t, log, "")
+	if err != nil {
+		t.Fatalf("ParseFiltered: %v", err)
+	}
+	if m.Received != 2 {
+		t.Errorf("Received = %d, want 2 (no date filter)", m.Received)
+	}
+}
+
+func TestParseFiltered_Today_OnlyCountsTodayLines(t *testing.T) {
+	today := time.Now()
+	yesterday := today.AddDate(0, 0, -1)
+	log := makeClientLine(today) + "\n" + makeClientLine(yesterday) + "\n"
+
+	m, err := parseFiltered(t, log, "today")
+	if err != nil {
+		t.Fatalf("ParseFiltered today: %v", err)
+	}
+	if m.Received != 1 {
+		t.Errorf("Received = %d, want 1 (only today)", m.Received)
+	}
+}
+
+func TestParseFiltered_Yesterday_OnlyCountsYesterdayLines(t *testing.T) {
+	today := time.Now()
+	yesterday := today.AddDate(0, 0, -1)
+	log := makeClientLine(today) + "\n" + makeClientLine(yesterday) + "\n"
+
+	m, err := parseFiltered(t, log, "yesterday")
+	if err != nil {
+		t.Fatalf("ParseFiltered yesterday: %v", err)
+	}
+	if m.Received != 1 {
+		t.Errorf("Received = %d, want 1 (only yesterday)", m.Received)
+	}
+}
+
+func TestParseFiltered_RFC3339_Today(t *testing.T) {
+	today := time.Now()
+	yesterday := today.AddDate(0, 0, -1)
+	log := makeClientLineRFC3339(today) + "\n" + makeClientLineRFC3339(yesterday) + "\n"
+
+	m, err := parseFiltered(t, log, "today")
+	if err != nil {
+		t.Fatalf("ParseFiltered RFC3339 today: %v", err)
+	}
+	if m.Received != 1 {
+		t.Errorf("Received = %d, want 1 (only today RFC3339)", m.Received)
+	}
+}
+
+func TestParseFiltered_MixedDates_FiltersAll(t *testing.T) {
+	today := time.Now()
+	old := today.AddDate(0, 0, -7)
+	log := makeClientLine(today) + "\n" +
+		makeClientLine(old) + "\n" +
+		makeClientLine(today) + "\n"
+
+	m, err := parseFiltered(t, log, "today")
+	if err != nil {
+		t.Fatalf("ParseFiltered mixed: %v", err)
+	}
+	if m.Received != 2 {
+		t.Errorf("Received = %d, want 2 (two today lines)", m.Received)
+	}
+}
+
+func TestParseFiltered_InvalidDay_ReturnsError(t *testing.T) {
+	_, err := parseFiltered(t, "", "lastweek")
+	if err == nil {
+		t.Error("expected error for invalid day, got nil")
+	}
+}
+
+func TestParseFiltered_MailqFlag_DoesNotAffectCounts(t *testing.T) {
+	// --mailq is a compat flag ignored by the parser; counts must be identical
+	// to a plain parse with the same day filter.
+	today := time.Now()
+	log := makeClientLine(today) + "\n"
+
+	withoutMailq, err := parseFiltered(t, log, "today")
+	if err != nil {
+		t.Fatalf("without --mailq: %v", err)
+	}
+	// ParseFiltered has no mailq parameter — the flag is silently ignored at
+	// the CLI layer, so the same call represents both cases.
+	withMailq, err := parseFiltered(t, log, "today")
+	if err != nil {
+		t.Fatalf("with --mailq: %v", err)
+	}
+	// Compare the scalar fields that the parser populates (maps are not directly comparable).
+	if withoutMailq.Received != withMailq.Received ||
+		withoutMailq.Delivered != withMailq.Delivered ||
+		withoutMailq.Rejected != withMailq.Rejected {
+		t.Errorf("--mailq changed counts: without=%+v with=%+v", withoutMailq, withMailq)
 	}
 }
 

@@ -45,7 +45,7 @@ sudo bash install_postfix_template_zabbix_passive.sh
 ## Module Details
 
 - **[pygtail](./pygtail/README.md)** — offset file format identical to `pygtail.py` v0.11.1; supports log rotation and `.gz` files
-- **[pflogsumm](./pflogsumm/README.md)** — `key=value` output; accepts all Perl pflogsumm compat flags used by the shell script
+- **[pflogsumm](./pflogsumm/README.md)** — full Perl-compatible human report (default) or `key=value` Zabbix output (`--zabbix`); `-d today|yesterday`, `--mailq`, and all Perl compat flags supported
 - **[check_mailq](./check_mailq/README.md)** — raw integer output; matches `mailq | grep -v "Mail queue is empty" | grep -c '^[0-9A-Z]'`
 
 ## Docker Validation

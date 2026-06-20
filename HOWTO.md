@@ -287,7 +287,7 @@ Every 1 minute (postfix.update_data):
         │  reads only NEW lines since last run
         │  tracks log rotation automatically
         ▼
-    pflogsumm (stdin)
+    pflogsumm --zabbix (stdin)
         │  outputs key=value metrics:
         │    received=42
         │    delivered=38
@@ -409,4 +409,5 @@ If you were previously using `pygtail.py` and Perl `pflogsumm`:
 - **Offset file** (`/tmp/zabbix-postfix-passive-offset.dat`) — same format, no reset needed
 - **Stats file** (`/tmp/zabbix-postfix-passive-statsfile.dat`) — same `key;value` format, no reset needed
 - **Template** — same item keys, no template re-import needed
+- **pflogsumm output** — Go binary defaults to the full Perl human report; pass `--zabbix` to get `key=value` output (required by the Zabbix script)
 - **Packages to remove** — `apt remove pflogsumm` (optional, no longer required)

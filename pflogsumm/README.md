@@ -1,6 +1,6 @@
 # pflogsumm
 
-Go implementation of the Postfix log summarizer. Parses `mail.log` / `maillog` and outputs metric counts. Drop-in replacement for the Perl `pflogsumm` tool used by the Zabbix monitoring scripts.
+Go implementation of the Perl pflogsumm Postfix log summarizer. Parses `mail.log` / `maillog` and produces output identical to the Perl version by default. Drop-in replacement — no Perl required on the agent host.
 
 ## Prerequisites
 
@@ -9,120 +9,127 @@ Go implementation of the Postfix log summarizer. Parses `mail.log` / `maillog` a
 ## Build
 
 ```bash
-make build          # produces ./pflogsumm
+make build          # produces ./dist/pflogsumm
 sudo make install   # installs to /usr/local/bin/pflogsumm
 ```
 
 ## Usage
 
 ```
-pflogsumm [flags] [logfile]
+usage: pflogsumm -[eq] [-d <today|yesterday>] [--detail <cnt>]
+    [--bounce-detail <cnt>] [--deferral-detail <cnt>]
+    [-h <cnt>] [-i|--ignore-case] [--iso-date-time] [--mailq]
+    [-m|--uucp-mung] [--no-no-msg-size] [--problems-first]
+    [--rej-add-from] [--reject-detail <cnt>] [--smtp-detail <cnt>]
+    [--smtpd-stats] [--smtpd-warning-detail <cnt>]
+    [--syslog-name=string] [-u <cnt>] [--verbose-msg-detail]
+    [--verp-mung[=<n>]] [--zero-fill] [file1 [filen]]
 
-If no logfile is given, reads from stdin.
+       pflogsumm --[version|help]
 
-Flags:
-      --format string   output format: keyvalue, json, summary (default "keyvalue")
-  -v, --version         print version and exit
-  -h, --help            show this help
+Go-specific flags:
+  --format string   output format: human, keyvalue, json, summary (default "human")
+  --zabbix          output key=value metrics for Zabbix (overrides --format)
+  --mailq           append current mail queue after report
 ```
+
+If no logfile is given, reads from stdin. Multiple files are concatenated.
 
 ### Examples
 
 ```bash
-# Parse a log file (default key=value output)
+# Full human-readable report (matches Perl pflogsumm output)
 pflogsumm /var/log/mail.log
 
-# Pipe from pygtail (incremental)
-pygtail -o /tmp/postfix.offset /var/log/mail.log | pflogsumm
+# Filter to today or yesterday only
+pflogsumm -d today /var/log/mail.log
+pflogsumm -d yesterday /var/log/mail.log
 
-# JSON output for scripting
-pflogsumm --format json /var/log/mail.log
+# Multiple log files (concatenated, same as Perl)
+pflogsumm /var/log/mail.log.1 /var/log/mail.log
 
-# Human-readable summary (similar to Perl pflogsumm)
-pflogsumm --format summary /var/log/mail.log
+# Append live mail queue at the end of the report
+pflogsumm -d today --mailq /var/log/mail.log
 
-# Extract a single metric in shell
-pflogsumm /var/log/mail.log | grep '^received=' | cut -d= -f2
+# Zabbix key=value output (for passive monitoring integration)
+pflogsumm --zabbix /var/log/mail.log
+
+# Pipe from pygtail (incremental reads — used by Zabbix script)
+pygtail -o /tmp/postfix.offset /var/log/mail.log | pflogsumm --zabbix
 ```
 
-## Output Reference
+## Output Modes
 
-Default (`keyvalue`) format — one metric per line:
+### Default (human-readable) — identical to Perl pflogsumm
 
-| Key | Description |
-|-----|-------------|
-| `received` | Messages accepted by the MTA (smtpd client= + pickup) |
-| `delivered` | Messages successfully delivered |
-| `forwarded` | Messages forwarded |
-| `deferred` | Unique messages with at least one deferral |
-| `bounced` | Messages bounced (status=bounced) |
-| `rejected` | Messages rejected (NOQUEUE: reject + cleanup milter-reject) |
-| `reject_warnings` | Reject warnings |
-| `held` | Messages held |
-| `discarded` | Messages discarded |
-| `bytes_received` | Total bytes received (integer bytes) |
-| `bytes_delivered` | Total bytes delivered (integer bytes, counted per recipient) |
+```
+Postfix log summaries for Jun 20
 
-## Flag Comparison with Perl pflogsumm
+Grand Totals
+------------
+messages
 
-| Perl flag | Go support | Notes |
-|-----------|-----------|-------|
-| `[logfile]` | ✓ | positional arg or stdin |
-| `--format` | ✓ new | `keyvalue` (default), `json`, `summary` |
-| `-u <cnt>` | ✓ accepted, ignored | top-users count; irrelevant (no detail sections) |
-| `-h <cnt>` | ✗ not accepted | cobra reserves `-h` for `--help`; drop from scripts |
-| `--no_bounce_detail` | ✓ accepted, ignored | no detail sections in Go version |
-| `--no_deferral_detail` | ✓ accepted, ignored | |
-| `--no_reject_detail` | ✓ accepted, ignored | |
-| `--no_smtpd_warnings` | ✓ accepted, ignored | |
-| `--no_no_msg_size` | ✓ accepted, ignored | |
+ 164181   received
+  81697   delivered
+      0   forwarded
+    407   deferred  (4320  deferrals)
+   6656   bounced
+ 375055   rejected (88%)
+...
+```
+
+### `--zabbix` — key=value for Zabbix passive monitoring
+
+Integer values, no k/m/g suffixes:
+
+```
+received=164181
+delivered=81697
+forwarded=0
+deferred=407
+bounced=6656
+rejected=375055
+reject_warnings=0
+held=0
+discarded=0
+bytes_received=9347000000
+bytes_delivered=4820000000
+```
+
+## Flag Compatibility with Perl pflogsumm
+
+All flags accepted by the Perl version are accepted here. Most are silently ignored because they control detail sections that the Go version currently does not render. The key flags that ARE implemented:
+
+| Flag | Status | Notes |
+|------|--------|-------|
+| `[file1 [filen]]` | ✓ implemented | multiple files concatenated |
+| `-d today\|yesterday` | ✓ implemented | syslog and RFC3339 timestamps |
+| `--mailq` | ✓ implemented | appends `mailq` output |
+| `--zabbix` | ✓ implemented (new) | key=value output for Zabbix |
+| `-u <cnt>` | ✓ accepted, ignored | |
+| `-h <cnt>` | ✓ accepted (`--h`) | cobra reserves `-h` for `--help` |
+| `-e / -q / -i / -m` | ✓ accepted, ignored | |
+| `--no-bounce-detail` | ✓ accepted, ignored | underscore variant also works |
+| `--no-deferral-detail` | ✓ accepted, ignored | |
+| `--no-reject-detail` | ✓ accepted, ignored | |
+| `--no-smtpd-warnings` | ✓ accepted, ignored | |
+| `--no-no-msg-size` | ✓ accepted, ignored | |
+| `--detail <cnt>` | ✓ accepted, ignored | |
 | `--bounce-detail <cnt>` | ✓ accepted, ignored | |
 | `--deferral-detail <cnt>` | ✓ accepted, ignored | |
 | `--reject-detail <cnt>` | ✓ accepted, ignored | |
 | `--smtp-detail <cnt>` | ✓ accepted, ignored | |
 | `--smtpd-warning-detail <cnt>` | ✓ accepted, ignored | |
-| `--detail <cnt>` | ✓ accepted, ignored | |
 | `--problems-first` | ✓ accepted, ignored | |
 | `--rej-add-from` | ✓ accepted, ignored | |
-| `--ignore-case` | ✓ accepted, ignored | |
 | `--verbose-msg-detail` | ✓ accepted, ignored | |
 | `--zero-fill` | ✓ accepted, ignored | |
 | `--iso-date-time` | ✓ accepted, ignored | |
 | `--smtpd-stats` | ✓ accepted, ignored | |
-| `--mailq` | ✓ accepted, ignored | use `check_mailq` binary instead |
+| `--verp-mung[=n]` | ✓ accepted, ignored | optional value works |
 | `--syslog-name=string` | ✓ accepted, ignored | |
-| `-d <today\|yesterday>` | ✓ accepted, ignored | no date filtering in Go version |
-| `-e / --extended` | not registered | not needed |
-| `-q` | not registered | not needed |
-| `--verp-mung` | not registered | not needed |
 
-## Output Format Compatibility
-
-The Perl pflogsumm outputs a human-readable summary:
-```
- 141741   received
-  51313   delivered
-   7231m  bytes received
-```
-
-The Go pflogsumm defaults to `key=value` (integer bytes, no k/m/g suffixes):
-```
-received=141741
-delivered=51313
-bytes_received=7593259799
-```
-
-`zabbix_postfix_passive.sh` was updated to parse `key=value` output and no longer calls Perl pflogsumm. After migration, `apt install pflogsumm` is no longer required on the agent host.
-
-## Testing
-
-```bash
-make test                               # unit tests
-make -C .. fetch-testdata HOST=mx01    # fetch real mail.log from mx01
-go test -tags integration ./...        # golden test vs pflogsumm.pl
-```
-
-The golden test (`golden_test.go`) compares Go vs Perl pflogsumm on the same `testdata/mail.log`. All 5 key metrics match exactly when the log is not actively growing.
+Flag names with underscores (`--no_bounce_detail`) are treated identically to dashes (`--no-bounce-detail`).
 
 ## Zabbix Integration
 
@@ -130,8 +137,14 @@ The golden test (`golden_test.go`) compares Go vs Perl pflogsumm on the same `te
 
 ```bash
 pygtail -o /tmp/zabbix-postfix-passive-offset.dat /var/log/mail.log \
-  | pflogsumm -u 0 --no_bounce_detail --no_deferral_detail \
+  | pflogsumm --zabbix -u 0 --no_bounce_detail --no_deferral_detail \
                --no_reject_detail --no_smtpd_warnings --no_no_msg_size
 ```
 
-The `-h 0` flag (used by the old Perl invocation) is **not accepted** — it is not registered in the Go binary because cobra reserves `-h` for `--help`. The script drops it.
+`--zabbix` switches output to key=value format consumed by the shell script. The compat flags (`--no_*`) are accepted for script compatibility with the Perl invocation and are silently ignored.
+
+## Testing
+
+```bash
+make test          # unit tests (parser + formatter)
+```

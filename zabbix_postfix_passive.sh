@@ -88,7 +88,7 @@ if [ -n "$1" ]; then
 else
         # read new lines from mail log and parse with pflogsumm (key=value output)
         "${PYGTAIL}" -o"${PFOFFSETFILE}" "${MAILLOG}" | \
-                "${PFLOGSUMM}" -u 0 --no_bounce_detail --no_deferral_detail \
+                "${PFLOGSUMM}" --zabbix -u 0 --no_bounce_detail --no_deferral_detail \
                 --no_reject_detail --no_smtpd_warnings --no_no_msg_size \
                 > "${TEMPFILE}" 2>/dev/null
 
