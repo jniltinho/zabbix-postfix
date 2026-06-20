@@ -20,6 +20,8 @@ for pair in \
     fi
 done
 
+chmod +x /opt/zabbix_postfix/zabbix_postfix_passive.sh
+
 if [ -n "$ZBX_CONF_DIR" ]; then
     install -m 0644 "$CONF_SRC" "${ZBX_CONF_DIR}/zabbix_postfix_passive.conf"
 else
