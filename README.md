@@ -5,7 +5,7 @@
 [![Release](https://img.shields.io/github/v/release/jniltinho/zabbix-postfix)](https://github.com/jniltinho/zabbix-postfix/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-![Zabbix Postfix Agent Architecture](./docs/screenshots/postfix_agent_architecture.jpg)
+![Zabbix Postfix Agent Architecture](./docs/screenshots/postfix_agent_architecture.png)
 
 ---
 
