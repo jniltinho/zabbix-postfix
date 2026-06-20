@@ -3,6 +3,7 @@
 | Document | Description |
 |----------|-------------|
 | [HOWTO.md](HOWTO.md) | Step-by-step installation and configuration guide |
+| [ZABBIX_API.md](ZABBIX_API.md) | Import template and create scripts via Zabbix JSON-RPC API |
 | [motivation.md](motivation.md) | Why Go instead of Perl/Python |
 | [pflogsumm-zabbix-output.md](pflogsumm-zabbix-output.md) | pflogsumm `--zabbix` output fields and all flags explained |
 | [screenshots/README.md](screenshots/README.md) | Architecture and flow diagrams |

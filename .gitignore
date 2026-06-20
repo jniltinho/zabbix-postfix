@@ -12,6 +12,10 @@ zabbix-postfix/
 *.test
 *.out
 
+# Python
+*.pyc
+__pycache__/
+
 # Offset files created by pygtail
 *.offset
 
