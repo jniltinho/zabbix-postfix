@@ -13,42 +13,38 @@ template_postfix_passive.xml         zabbix_postfix_passive.conf
   14 items, 4 graphs, 4 triggers  ◀────  3 UserParameters
                                              │
                          postfix.update_data ──▶ zabbix_postfix_passive.sh
-                                             │       ├─ pygtail   (reads new log lines)
-                                             │       └─ pflogsumm (parses and counts)
+                                             │       └─ pflogsumm --last 5m (parses and counts)
                          postfix[received]   ──▶ reads saved counter → integer
                          postfix[delivered]  ──▶ reads saved counter → integer
-                         postfix.pfmailq     ──▶ check_mailq → live queue depth
+                         postfix.pfmailq     ──▶ pflogsumm check-mailq --zabbix → queue depth
 ```
 
 ### Update cycle
 
 ```
 Every 1 minute — postfix.update_data
-    pygtail reads only NEW lines from mail.log since last run
-        │  (tracks position with an offset file — survives log rotation)
-        ▼
-    pflogsumm --zabbix parses them and outputs key=value:
+    pflogsumm --zabbix --last 5m parses the last 5 minutes of mail.log:
         received=42
         delivered=38
         bytes_received=1048576
         ...
         ▼
-    zabbix_postfix_passive.sh adds the delta to the stats file:
-        received;184   (was 142 + 42)
-        delivered;312  (was 274 + 38)
+    zabbix_postfix_passive.sh writes the stats file (absolute totals, rolling window):
+        received=42
+        delivered=38
         ...
 
 Every 3 minutes — postfix[received], postfix[delivered], ...
     zabbix_postfix_passive.sh reads one line from the stats file → integer → Zabbix
 ```
 
-Metrics are **cumulative** — they grow over time. Zabbix graphs the rate of change,
-not the raw total.
+Metrics represent the **last 5 minutes** of activity. Zabbix graphs these as a
+rolling time-series. Use `--reset` to clear the cache if stale data appears.
 
 ### UserParameters
 
 ```
-UserParameter=postfix.pfmailq,/opt/zabbix_postfix/check_mailq --zabbix
+UserParameter=postfix.pfmailq,/opt/zabbix_postfix/pflogsumm check-mailq --zabbix
 UserParameter=postfix[*],sudo /opt/zabbix_postfix/zabbix_postfix_passive.sh $1
 UserParameter=postfix.update_data,sudo /opt/zabbix_postfix/zabbix_postfix_passive.sh
 ```
@@ -57,10 +53,10 @@ UserParameter=postfix.update_data,sudo /opt/zabbix_postfix/zabbix_postfix_passiv
 
 | File | Purpose |
 |------|---------|
-| `/tmp/zabbix-postfix-passive-offset.dat` | Where `pygtail` stopped reading last time |
-| `/tmp/zabbix-postfix-passive-statsfile.dat` | Accumulated counters (`key;value` per line) |
+| `/tmp/zabbix-postfix-passive-statsfile.dat` | Last 5-minute counters (`key=value` per line) |
 
-Do not delete these while the agent is running.
+Delete this file to force a fresh poll on the next `postfix.update_data` call
+(equivalent to running `zabbix_postfix_passive.sh --reset`).
 
 ### Available metrics
 
@@ -86,10 +82,13 @@ Do not delete these while the agent is running.
 
 ```
 zabbix-postfix/
-├── pygtail/                    Go module — reads log files incrementally
-├── pflogsumm/                  Go module — parses Postfix logs, outputs --zabbix key=value
-├── check_mailq/                Go module — returns live queue depth as integer
-├── zabbix_postfix_passive.sh   Main passive check script (orchestrates the three binaries)
+├── pflogsumm/                  Go module — parses logs, outputs --zabbix counters,
+│   ├── cmd/                      includes check-mailq subcommand for queue depth
+│   │   ├── root.go
+│   │   └── checkmailq.go
+│   ├── internal/mailq/         Queue runner + parser (used by check-mailq)
+│   └── pkg/parser/             Log parser (ParseFiltered, ParseLastN)
+├── zabbix_postfix_passive.sh   Main passive check script (orchestrates pflogsumm)
 ├── zabbix_postfix_passive.conf Zabbix agent UserParameter definitions
 ├── template_postfix_passive.xml Zabbix template (14 items, 4 graphs, 4 triggers)
 ├── Makefile                    Build, test, and package orchestration
@@ -98,7 +97,7 @@ zabbix-postfix/
 │   ├── HOWTO.md                End-user install guide
 │   └── DEVELOPMENT.md          This file
 ├── scripts/
-│   ├── build-binaries-docker.sh  Build Go binaries via Docker
+│   ├── build-binaries-docker.sh  Build Go binary via Docker
 │   ├── build-packages-docker.sh  Build .deb/.rpm/.tar.gz via Docker
 │   ├── build-package.sh          fpm wrapper (called by Makefile and Docker)
 │   ├── make-install-package.sh   Build the classic install tarball
@@ -129,7 +128,7 @@ zabbix-postfix/
 make build
 ```
 
-Outputs: `pygtail/dist/pygtail`, `pflogsumm/dist/pflogsumm`, `check_mailq/dist/check_mailq`
+Output: `pflogsumm/dist/pflogsumm`
 
 ### Build via Docker (no local toolchain needed)
 
@@ -188,7 +187,7 @@ make test
 make build
 docker build -f Dockerfile.test-passive -t zabbix-postfix-test .
 docker run --rm zabbix-postfix-test
-# Expected: Results: 19 passed, 0 failed
+# Expected: Results: 15 passed, 0 failed
 ```
 
 ### Manual test on a live agent
@@ -212,11 +211,11 @@ git push origin v1.2.3
 
 The CI pipeline (`.github/workflows/release.yml`) then:
 
-1. Builds Go binaries with Go + UPX on the runner
-2. Packages individual binary tarballs (`pygtail_<v>_linux_amd64.tar.gz`, etc.)
+1. Builds the Go binary with Go + UPX on the runner
+2. Packages the individual binary tarball (`pflogsumm_<v>_linux_amd64.tar.gz`)
 3. Builds the classic install tarball via `make-install-package.sh`
 4. Builds `.deb`, `.rpm`, and `.tar.gz` via Docker (`export-pkg` stage)
-5. Publishes a GitHub release with all seven artifacts
+5. Publishes a GitHub release with all five artifacts
 
 ### Release artifacts
 
@@ -226,9 +225,7 @@ The CI pipeline (`.github/workflows/release.yml`) then:
 | `zabbix-postfix-<v>-1.x86_64.rpm` | RHEL/CentOS/Rocky package |
 | `zabbix-postfix_<v>_pkg_linux_amd64.tar.gz` | Portable package with `install.sh` |
 | `zabbix-postfix_<v>_linux_amd64.tar.gz` | Classic install package |
-| `pygtail_<v>_linux_amd64.tar.gz` | Individual binary |
 | `pflogsumm_<v>_linux_amd64.tar.gz` | Individual binary |
-| `check_mailq_<v>_linux_amd64.tar.gz` | Individual binary |
 
 ---
 
@@ -268,18 +265,16 @@ Override paths at runtime without reinstalling — useful for testing:
 # Use a different log file (e.g. rotated)
 sudo MAILLOG=/var/log/mail.log.1 /opt/zabbix_postfix/zabbix_postfix_passive.sh
 
-# Use different binaries
+# Use a different pflogsumm binary
 ZABBIX_POSTFIX_PFLOGSUMM=/tmp/pflogsumm_new \
-ZABBIX_POSTFIX_PYGTAIL=/tmp/pygtail_new \
   sudo -E /opt/zabbix_postfix/zabbix_postfix_passive.sh
 ```
 
 ### Manual installation (without a package manager)
 
 ```bash
-# 1. Install binaries
-sudo install -m 0755 pygtail/dist/pygtail pflogsumm/dist/pflogsumm \
-  check_mailq/dist/check_mailq /opt/zabbix_postfix/
+# 1. Install binary
+sudo install -m 0755 pflogsumm/dist/pflogsumm /opt/zabbix_postfix/
 
 # 2. Install passive script
 sudo install -m 0755 zabbix_postfix_passive.sh /opt/zabbix_postfix/
@@ -312,9 +307,7 @@ sudo rpm -e zabbix-postfix
 
 **Manual**
 ```bash
-sudo rm -f /opt/zabbix_postfix/pygtail \
-           /opt/zabbix_postfix/pflogsumm \
-           /opt/zabbix_postfix/check_mailq \
+sudo rm -f /opt/zabbix_postfix/pflogsumm \
            /opt/zabbix_postfix/zabbix_postfix_passive.sh \
            /etc/zabbix/zabbix_agent2.d/zabbix_postfix_passive.conf
 sudo sed -i '/zabbix_postfix_passive/d' /etc/sudoers
@@ -331,8 +324,8 @@ If you were using the original `pygtail.py` and Perl `pflogsumm`:
 
 | Item | Action |
 |------|--------|
-| Offset file | No change — same format |
-| Stats file | No change — same `key;value` format |
+| Offset file | No longer needed — delete `/tmp/zabbix-postfix-passive-offset.dat` |
+| Stats file | Format changed to `key=value`; old `key;value` file will be overwritten on first poll |
 | Zabbix template | No re-import needed — same item keys |
 | pflogsumm | Go binary outputs identical `--zabbix` key=value format |
 | Old packages | `apt remove pflogsumm` is optional |

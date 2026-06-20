@@ -1,6 +1,6 @@
 # zabbix-postfix
 
-**Monitor Postfix email traffic in Zabbix — without Python or Perl.**
+**Monitor Postfix email traffic in Zabbix — one Go binary, no Python, no Perl.**
 
 [![Release](https://img.shields.io/github/v/release/jniltinho/zabbix-postfix)](https://github.com/jniltinho/zabbix-postfix/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -11,7 +11,7 @@
 
 ## What it does
 
-Installs three small Go binaries on your mail server and a ready-made template on
+Installs one small Go binary on your mail server and a ready-made template on
 Zabbix. Together they collect Postfix statistics every 1–3 minutes and display them
 as graphs and alerts — no configuration needed beyond `dpkg -i` or `rpm -i`.
 
@@ -88,15 +88,13 @@ zabbix_get -s 127.0.0.1 -k 'postfix.pfmailq'      # integer, e.g. 11
 
 ## No toolchain required on the mail server
 
-The three binaries are statically compiled and UPX-compressed (~1 MB each).
+The binary is statically compiled and UPX-compressed (~1 MB).
 No Go, Python, Perl, or any runtime dependency needed on the agent host.
 
 | What you get | Details |
 |--------------|---------|
-| `pygtail` | Reads new log lines since last run (survives log rotation) |
-| `pflogsumm` | Parses Postfix logs and outputs counters |
-| `check_mailq` | Returns live queue depth as a single integer |
-| `zabbix_postfix_passive.sh` | Orchestrates the three binaries for Zabbix |
+| `pflogsumm` | Parses Postfix logs, outputs counters, and checks queue depth (`check-mailq` subcommand) |
+| `zabbix_postfix_passive.sh` | Orchestrates `pflogsumm` for Zabbix |
 | `template_postfix_passive.xml` | Zabbix 7.0 template |
 
 ---
@@ -126,8 +124,10 @@ bash scripts/build-packages-docker.sh
 
 ## Migrating from Python/Perl?
 
-Drop-in compatible — same offset file, stats file format, and Zabbix item keys.
-No need to reset counters or re-import a different template.
+Drop-in compatible — same Zabbix item keys and template.
+No need to re-import a different template. Stats are now absolute daily totals
+(rolling 5-minute window) rather than accumulated deltas — existing graphs adapt
+automatically.
 
 ---
 

@@ -19,7 +19,7 @@ While functional, this approach introduces several problems for production mail 
 
 ## Why Go is Ideal for this Solution
 
-Go was designed by Google for building fast, reliable, and efficient system infrastructure. Choosing Go to rewrite `pygtail`, `pflogsumm`, and `check_mailq` yields key benefits:
+Go was designed by Google for building fast, reliable, and efficient system infrastructure. Choosing Go to rewrite `pflogsumm` (which now also subsumes the queue check via its `check-mailq` subcommand) yields key benefits:
 
 ### 1. Single Static Binaries
 Go compiles all code and dependencies into a single, statically linked executable.

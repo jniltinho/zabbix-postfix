@@ -6,7 +6,7 @@ Monitor Postfix with Zabbix in three steps.
 
 ## What this does
 
-Installs three Go binaries on your mail server and a template on the Zabbix server.
+Installs one Go binary on your mail server and a template on the Zabbix server.
 Together they collect Postfix statistics (received, delivered, rejected, queue depth,
 etc.) and display them as graphs and alerts.
 
@@ -112,9 +112,9 @@ sudo journalctl -u zabbix-agent2 -n 50
 sudo zabbix_agent2 -t postfix.update_data
 ```
 
-**Binaries not found**
+**Binary not found**
 ```bash
-ls -lh /opt/zabbix_postfix/pygtail /opt/zabbix_postfix/pflogsumm /opt/zabbix_postfix/check_mailq
+ls -lh /opt/zabbix_postfix/pflogsumm
 ```
 
 **Mail log not readable**
@@ -124,7 +124,7 @@ sudo usermod -aG adm zabbix && sudo systemctl restart zabbix-agent2
 
 **Zero or stale metrics**
 ```bash
-sudo rm -f /tmp/zabbix-postfix-passive-*.dat
+sudo /opt/zabbix_postfix/zabbix_postfix_passive.sh --reset
 zabbix_get -s 127.0.0.1 -k 'postfix.update_data'
 ```
 
