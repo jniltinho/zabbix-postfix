@@ -32,9 +32,15 @@ All three tools (`pygtail`, `pflogsumm`, `check_mailq`) are Go binaries compiled
 
 ### Build machine (where you compile)
 
-- Go ≥ 1.21
+**Option A — local build**
+
+- Go ≥ 1.26.4
 - `make`
-- `upx` (for binary compression — `apt install upx` or `yum install upx`)
+- `upx` (for binary compression — `apt install upx-ucl` or `yum install upx`)
+
+**Option B — Docker build (no Go or UPX on the host)**
+
+- Docker with BuildKit enabled (Docker 18.09+)
 
 ### Mail server (Zabbix agent host)
 
@@ -50,12 +56,16 @@ All three tools (`pygtail`, `pflogsumm`, `check_mailq`) are Go binaries compiled
 
 ## Part 1 — Build the Go Binaries
 
-Clone the repository and build:
+Clone the repository:
 
 ```bash
 git clone https://github.com/jniltinho/zabbix-postfix
 cd zabbix-postfix
+```
 
+### 1.1 Local build (Go 1.26.4 + UPX installed)
+
+```bash
 # Build all three binaries into dist/ inside each module
 make build
 
@@ -77,11 +87,91 @@ Run unit tests to verify correctness:
 make test
 ```
 
+### 1.2 Docker build (no Go or UPX on the host)
+
+Use `docs/Dockerfile` when you only have Docker — it installs Go, UPX, and `make` inside the image and compiles the three binaries for you.
+
+```bash
+# Helper script — copies binaries into */dist/
+bash scripts/build-binaries-docker.sh
+```
+
+Or run Docker directly:
+
+```bash
+DOCKER_BUILDKIT=1 docker build -f docs/Dockerfile --target export -o dist/docker-build .
+
+mkdir -p pygtail/dist pflogsumm/dist check_mailq/dist
+install -m 0755 dist/docker-build/pygtail     pygtail/dist/pygtail
+install -m 0755 dist/docker-build/pflogsumm   pflogsumm/dist/pflogsumm
+install -m 0755 dist/docker-build/check_mailq check_mailq/dist/check_mailq
+rm -rf dist/docker-build
+
+ls -lh pygtail/dist/pygtail pflogsumm/dist/pflogsumm check_mailq/dist/check_mailq
+```
+
+The Docker image uses `golang:1.26.4-bookworm` and downloads UPX from the official GitHub release. No Go toolchain is left on your machine — only the three compressed binaries in `*/dist/`.
+
+### 1.3 Create an install package
+
+Bundle everything needed on the mail server and Zabbix server into one folder (or `.tar.gz`):
+
+```bash
+# Use existing binaries in */dist/
+bash scripts/make-install-package.sh
+
+# Or build via Docker first, then package
+bash scripts/make-install-package.sh --docker
+
+# Or build locally with make, then package
+bash scripts/make-install-package.sh --build
+
+# Also create dist/zabbix-postfix-install.tar.gz
+bash scripts/make-install-package.sh --docker --archive
+```
+
+The package is written to `dist/zabbix-postfix-install/`:
+
+```
+dist/zabbix-postfix-install/
+├── INSTALL.txt                              Quick install steps
+├── bin/
+│   ├── pygtail
+│   ├── pflogsumm
+│   └── check_mailq
+├── install_postfix_template_zabbix_passive.sh
+├── zabbix_postfix_passive.sh
+├── zabbix_postfix_passive.conf
+├── template_postfix_passive.xml             Import on Zabbix server
+└── scripts/
+    └── configure_paths.sh
+```
+
+Copy the folder (or tarball) to the mail server — no git clone required on the host.
+
 ---
 
 ## Part 2 — Install on the Mail Server (Zabbix Agent Host)
 
-### 2.1 Copy binaries to the mail server
+### 2.1 Copy files to the mail server
+
+**From the install package (recommended):**
+
+```bash
+# On the build machine — create package if you have not yet
+bash scripts/make-install-package.sh --docker --archive
+
+# Copy to the mail server
+scp dist/zabbix-postfix-install.tar.gz mx01:/tmp/
+ssh mx01 "cd /tmp && tar -xzf zabbix-postfix-install.tar.gz"
+
+# On the mail server
+cd /tmp/zabbix-postfix-install
+sudo install -m 0755 bin/pygtail bin/pflogsumm bin/check_mailq /usr/local/bin/
+sudo bash install_postfix_template_zabbix_passive.sh
+```
+
+**From individual binaries (manual):**
 
 ```bash
 # From your build machine:
@@ -94,7 +184,7 @@ ssh mx01 "sudo install -m 0755 /tmp/pygtail     /usr/local/bin/pygtail && \
           sudo install -m 0755 /tmp/check_mailq /usr/local/bin/check_mailq"
 ```
 
-Or install directly if you have the repo on the mail server:
+Or install directly if you have the full repo on the mail server:
 
 ```bash
 sudo make install
@@ -113,9 +203,11 @@ Verify:
 The installer detects whether `zabbix-agent` or `zabbix-agent2` is in use and installs to the correct conf directory.
 
 ```bash
-# Run from the repo root on the mail server (as root)
+# Run from the repo root or install package directory on the mail server (as root)
 sudo bash install_postfix_template_zabbix_passive.sh
 ```
+
+If you used the install package in section 2.1, the installer step is already included there.
 
 The installer:
 1. Checks Go binaries are present in `/usr/local/bin/`

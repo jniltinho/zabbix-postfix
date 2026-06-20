@@ -1,0 +1,9 @@
+.git
+.agent
+openspec
+.claude
+zabbix-postfix
+docs/screenshots
+dist/zabbix-postfix-install
+dist/zabbix-postfix-install.tar.gz
+dist/docker-build

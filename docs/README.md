@@ -61,6 +61,9 @@ template_postfix_passive.xml  ──poll──▶  zabbix_postfix_passive.conf
 | [`scripts/configure_paths.sh`](../scripts/configure_paths.sh) | Reconfigures binary and script paths in `zabbix_postfix_passive.conf` and `zabbix_postfix_passive.sh` when files are not in the default `/usr/local/bin` and `/usr/local/sbin` locations. |
 | [`validate-passive.sh`](../validate-passive.sh) | Integration test script (CI / Docker). Confirms binaries, the update pipeline, stats file format, and read mode behave correctly before deployment. |
 | [`Makefile`](../Makefile) | Builds, tests, and installs the three Go binaries (`make build`, `make test`, `make install`). |
+| [`docs/Dockerfile`](Dockerfile) | Docker image (`golang:1.26.4-bookworm`) to compile binaries without Go 1.26.4 or UPX on the host. Used by `scripts/build-binaries-docker.sh`. |
+| [`scripts/build-binaries-docker.sh`](../scripts/build-binaries-docker.sh) | Runs the Docker build and copies compressed binaries into `*/dist/`. |
+| [`scripts/make-install-package.sh`](../scripts/make-install-package.sh) | Assembles `dist/zabbix-postfix-install/` (and optional `.tar.gz`) with binaries, agent config, installer, and Zabbix template. |
 
 ### How the pieces connect during a poll
 

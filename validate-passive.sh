@@ -62,7 +62,8 @@ echo "$result" | grep -q "OK: statistics updated" && ok "second update run" || f
 
 echo ""
 echo "=== Task 0.1: Go pflogsumm matches Perl pflogsumm on same log ==="
-GO_RCV=$(/usr/local/bin/pflogsumm /var/log/mail.log | grep '^received=' | cut -d= -f2)
+GO_RCV=$(/usr/local/bin/pflogsumm /var/log/mail.log 2>/dev/null \
+    | grep -E '^\s+[0-9]+\s+received$' | awk '{print $1}')
 PERL_RCV=$(/usr/sbin/pflogsumm -h 0 -u 0 --no_bounce_detail --no_deferral_detail \
     --no_reject_detail --no_smtpd_warnings /var/log/mail.log 2>/dev/null \
     | grep -E '^\s+[0-9]+\s+received$' | awk '{print $1}')

@@ -4,7 +4,7 @@ Counts messages in the Postfix mail queue by running `mailq` and parsing its out
 
 ## Prerequisites
 
-- Go ≥ 1.21
+- Go ≥ 1.26.4
 - `mailq` in PATH (or specify path with `--mailq-path`)
 
 ## Build

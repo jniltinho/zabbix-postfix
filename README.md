@@ -89,7 +89,7 @@ sudo make install   # installs to /usr/local/bin/
 sudo bash install_postfix_template_zabbix_passive.sh
 ```
 
-**Requirements:** Go ≥ 1.21, `make`, `upx`. Agent host needs Postfix, Zabbix Agent/Agent2, and `sudo`.
+**Requirements:** Go ≥ 1.26.4, `make`, `upx`. Agent host needs Postfix, Zabbix Agent/Agent2, and `sudo`.
 
 ---
 

@@ -16,7 +16,7 @@ COPY check_mailq/dist/check_mailq /usr/local/bin/check_mailq
 RUN chmod +x /usr/local/bin/pygtail /usr/local/bin/pflogsumm /usr/local/bin/check_mailq
 
 # Copy updated passive script
-COPY zabbix-postfix/zabbix_postfix_passive.sh /usr/local/sbin/zabbix_postfix_passive.sh
+COPY zabbix_postfix_passive.sh /usr/local/sbin/zabbix_postfix_passive.sh
 RUN chmod +x /usr/local/sbin/zabbix_postfix_passive.sh
 
 # Copy mail.log fixture

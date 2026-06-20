@@ -4,7 +4,7 @@ Go implementation of the Perl pflogsumm Postfix log summarizer. Parses `mail.log
 
 ## Prerequisites
 
-- Go ≥ 1.21
+- Go ≥ 1.26.4
 
 ## Build
 
