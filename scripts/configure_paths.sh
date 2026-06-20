@@ -91,9 +91,12 @@ if [[ -z "${ZBX_CONF_FILE}" ]]; then
     echo -e "  [${YELLOW}SKIP${COL_RESET}] zabbix_postfix_passive.conf not found — update check_mailq path manually"
 else
     info "Updating ${ZBX_CONF_FILE}..."
-    sed -i "s|UserParameter=postfix\.pfmailq,.*|UserParameter=postfix.pfmailq,${BIN_DIR}/check_mailq --zabbix|" \
+    sed -i \
+        -e "s|UserParameter=postfix\.pfmailq,.*|UserParameter=postfix.pfmailq,${BIN_DIR}/check_mailq --zabbix|" \
+        -e "s|UserParameter=postfix\[.*\],sudo .*/zabbix_postfix_passive\.sh|UserParameter=postfix[*],sudo ${SCRIPT_FILE}|" \
+        -e "s|UserParameter=postfix\.update_data,sudo .*/zabbix_postfix_passive\.sh|UserParameter=postfix.update_data,sudo ${SCRIPT_FILE}|" \
         "${ZBX_CONF_FILE}"
-    ok "Updated check_mailq path"
+    ok "Updated all UserParameter paths"
 fi
 
 # ---------- detect and restart agent ----------
