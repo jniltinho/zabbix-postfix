@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e
+
+# Remove conf from whichever agent dir it was installed to
+for dir in \
+    "/etc/zabbix/zabbix_agent2.d" \
+    "/etc/zabbix/zabbix_agentd.conf.d" \
+    "/etc/zabbix/zabbix_agentd.d"; do
+    rm -f "${dir}/zabbix_postfix_passive.conf" 2>/dev/null || true
+done
+
+# Remove sudoers entry
+sed -i '/zabbix_postfix_passive/d' /etc/sudoers 2>/dev/null || true
+
+# Restart agent
+for svc in zabbix-agent2 zabbix-agent; do
+    if systemctl is-active --quiet "$svc" 2>/dev/null; then
+        systemctl restart "$svc" || true
+        break
+    fi
+done

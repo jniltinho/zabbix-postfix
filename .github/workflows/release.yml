@@ -21,6 +21,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Set version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -37,22 +41,41 @@ jobs:
       - name: Build Binaries
         run: make build
 
-      - name: Package Binaries
+      - name: Package individual binary tarballs
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
+          VERSION=${{ steps.version.outputs.VERSION }}
+          mkdir -p dist
           for BIN in pygtail pflogsumm check_mailq; do
-            ARCHIVE="${BIN}_${VERSION}_linux_amd64.tar.gz"
             mkdir -p "release/${BIN}"
             cp "${BIN}/dist/${BIN}" "release/${BIN}/"
-            tar -czvf "$ARCHIVE" -C "release/${BIN}" .
+            tar -czvf "dist/${BIN}_${VERSION}_linux_amd64.tar.gz" -C "release/${BIN}" .
           done
+
+      - name: Build combined install package tarball
+        run: |
+          bash scripts/make-install-package.sh --archive
+          mv dist/zabbix-postfix-install.tar.gz \
+             dist/zabbix-postfix_${{ steps.version.outputs.VERSION }}_linux_amd64.tar.gz
+
+      - name: Build .deb and .rpm via Docker
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          DOCKER_BUILDKIT=1 docker build \
+            -f docs/Dockerfile \
+            --target export-pkg \
+            --build-arg VERSION="${VERSION}" \
+            -o dist/ \
+            .
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            pygtail_*_linux_amd64.tar.gz
-            pflogsumm_*_linux_amd64.tar.gz
-            check_mailq_*_linux_amd64.tar.gz
+            dist/zabbix-postfix_*_linux_amd64.tar.gz
+            dist/pygtail_*_linux_amd64.tar.gz
+            dist/pflogsumm_*_linux_amd64.tar.gz
+            dist/check_mailq_*_linux_amd64.tar.gz
+            dist/zabbix-postfix_*.deb
+            dist/zabbix-postfix-*.rpm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

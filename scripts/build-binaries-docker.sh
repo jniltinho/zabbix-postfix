@@ -23,7 +23,7 @@ if ! command -v docker >/dev/null 2>&1; then
 fi
 
 echo "==> Building binaries with Docker (docs/Dockerfile)"
-DOCKER_BUILDKIT=1 docker build -f "${DOCKERFILE}" --target export -o "${EXPORT_DIR}" "${ROOT}"
+DOCKER_BUILDKIT=1 docker build -f "${DOCKERFILE}" --target export-bins -o "${EXPORT_DIR}" "${ROOT}"
 
 for mod in pygtail pflogsumm check_mailq; do
     mkdir -p "${ROOT}/${mod}/dist"

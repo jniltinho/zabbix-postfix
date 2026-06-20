@@ -1,0 +1,37 @@
+#!/bin/bash
+set -e
+
+CONF_SRC="/usr/share/zabbix-postfix/zabbix_postfix_passive.conf"
+SUDOERS_LINE="zabbix ALL=(ALL) NOPASSWD: /usr/local/sbin/zabbix_postfix_passive.sh"
+
+# Detect Zabbix agent conf dir (agent2 → agentd.conf.d → agentd.d)
+ZBX_CONF_DIR=""
+ZBX_SERVICE=""
+for pair in \
+    "/etc/zabbix/zabbix_agent2.d:zabbix-agent2" \
+    "/etc/zabbix/zabbix_agentd.conf.d:zabbix-agent" \
+    "/etc/zabbix/zabbix_agentd.d:zabbix-agent"; do
+    dir="${pair%%:*}"
+    svc="${pair##*:}"
+    if [ -d "$dir" ]; then
+        ZBX_CONF_DIR="$dir"
+        ZBX_SERVICE="$svc"
+        break
+    fi
+done
+
+if [ -n "$ZBX_CONF_DIR" ]; then
+    install -m 0644 "$CONF_SRC" "${ZBX_CONF_DIR}/zabbix_postfix_passive.conf"
+else
+    echo "WARNING: no Zabbix agent conf dir found — copy $CONF_SRC manually"
+fi
+
+# Add sudoers entry (idempotent)
+if ! grep -qF "$SUDOERS_LINE" /etc/sudoers 2>/dev/null; then
+    echo "$SUDOERS_LINE" >> /etc/sudoers
+fi
+
+# Restart agent
+if [ -n "$ZBX_SERVICE" ] && systemctl is-active --quiet "$ZBX_SERVICE" 2>/dev/null; then
+    systemctl restart "$ZBX_SERVICE" || true
+fi
