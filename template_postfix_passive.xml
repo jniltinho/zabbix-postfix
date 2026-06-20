@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zabbix_export>
+    <version>6.0</version>
+    <date>2026-06-19T00:00:00Z</date>
+    <template_groups>
+        <template_group>
+            <uuid>1933cf08068b44909c441b14bca68023</uuid>
+            <name>Templates/Applications</name>
+        </template_group>
+    </template_groups>
+    <templates>
+        <template>
+            <uuid>884cb0fbd8e546daa9451148d0608824</uuid>
+            <template>Template App Postfix by Zabbix agent</template>
+            <name>Template App Postfix by Zabbix agent (passive)</name>
+            <description>Postfix monitoring via passive Zabbix agent. Requires Go binaries: pygtail, pflogsumm, check_mailq. See https://github.com/jniltinho/zabbix-postfix</description>
+            <groups>
+                <group>
+                    <name>Templates/Applications</name>
+                </group>
+            </groups>
+            <items>
+                <item>
+                    <uuid>c6e1f7b79af248df83414c6b1e44750c</uuid>
+                    <name>SMTP Service</name>
+                    <type>SIMPLE</type>
+                    <key>net.tcp.service[smtp]</key>
+                    <delay>1m</delay>
+                    <history>1w</history>
+                    <trends>365d</trends>
+                    <valuemap>
+                        <name>Service state</name>
+                    </valuemap>
+                    <tags>
+                        <tag>
+                            <tag>Application</tag>
+                            <value>Postfix</value>
+                        </tag>
+                    </tags>
+                    <triggers>
+                        <trigger>
+                            <uuid>34f6a6a54ea5400d8a2f99bd55855bf0</uuid>
+                            <expression>last(/Template App Postfix by Zabbix agent/net.tcp.service[smtp])=0</expression>
+                            <name>SMTP service is down on {HOST.NAME}</name>
+                            <priority>HIGH</priority>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <uuid>b8d942cfa72b4f829f543593cc0ec10a</uuid>
+                    <name>Postfix Mail Queue</name>
+                    <key>postfix.pfmailq</key>
+                    <delay>3m</delay>
+                    <history>30d</history>
+                    <trends>365d</trends>
+                    <units>messages</units>
+                    <tags>
+                        <tag>
+                            <tag>Application</tag>
+                            <value>Postfix</value>
+                        </tag>
+                    </tags>
+                    <triggers>
+                        <trigger>
+                            <uuid>413c27176cf646e7812bf587bb52400b</uuid>
+                            <expression>last(/Template App Postfix by Zabbix agent/postfix.pfmailq)&gt;100</expression>
+                            <name>Postfix mail queue is high on {HOST.NAME} ({ITEM.LASTVALUE})</name>
+                            <priority>WARNING</priority>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <uuid>d66e765bfedc4c16bd0b9092c9db6927</uuid>
+                    <name>Postfix data update</name>
+                    <key>postfix.update_data</key>
+                    <delay>1m</delay>
+                    <history>1d</history>
+                    <trends>0</trends>
+                    <value_type>TEXT</value_type>
+                    <tags>
+                        <tag>
+                            <tag>Application</tag>
+                            <value>Postfix</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>029b2072b87a4166ab8e1de08072f5cd</uuid>
+                    <name>Postfix Received</name>
+                    <key>postfix[received]</key>
+                    <delay>3m</delay>
+                    <history>30d</history>
+                    <trends>365d</trends>
+                    <units>messages</units>
+                    <tags>
+                        <tag>
+                            <tag>Application</tag>
+                            <value>Postfix</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>cd560676c1b141d8a52c60186feec6d5</uuid>
+                    <name>Postfix Delivered</name>
+                    <key>postfix[delivered]</key>
+                    <delay>3m</delay>
+                    <history>30d</history>
+                    <trends>365d</trends>
+                    <units>messages</units>
+                    <tags>
+                        <tag>
+                            <tag>Application</tag>
+                            <value>Postfix</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>2cfbb3329b5c45fbac78d1b9681df685</uuid>
+                    <name>Postfix Forwarded</name>
+                    <key>postfix[forwarded]</key>
+                    <delay>3m</delay>
+                    <history>30d</history>
+                    <trends>365d</trends>
+                    <units>messages</units>
+                    <tags>
+                        <tag>
+                            <tag>Application</tag>
+                            <value>Postfix</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>4e346e61c50b4ccb953b9829a0b22597</uuid>
+                    <name>Postfix Deferred</name>
+                    <key>postfix[deferred]</key>
+                    <delay>3m</delay>
+                    <history>30d</history>
+                    <trends>365d</trends>
+                    <units>messages</units>
+                    <tags>
+                        <tag>
+                            <tag>Application</tag>
+                            <value>Postfix</value>
+                        </tag>
+                    </tags>
+                    <triggers>
+                        <trigger>
+                            <uuid>353892744a2e47e0877cdb5faa9304fd</uuid>
+                            <expression>last(/Template App Postfix by Zabbix agent/postfix[deferred])&gt;50</expression>
+                            <name>High number of deferred messages on {HOST.NAME} ({ITEM.LASTVALUE})</name>
+                            <priority>WARNING</priority>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <uuid>b305370b7ffa48f1a7677f8537d20743</uuid>
+                    <name>Postfix Bounced</name>
+                    <key>postfix[bounced]</key>
+                    <delay>3m</delay>
+                    <history>30d</history>
+                    <trends>365d</trends>
+                    <units>messages</units>
+                    <tags>
+                        <tag>
+                            <tag>Application</tag>
+                            <value>Postfix</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>fa06db2918e34191adcb069ba45ed137</uuid>
+                    <name>Postfix Rejected</name>
+                    <key>postfix[rejected]</key>
+                    <delay>3m</delay>
+                    <history>30d</history>
+                    <trends>365d</trends>
+                    <units>messages</units>
+                    <tags>
+                        <tag>
+                            <tag>Application</tag>
+                            <value>Postfix</value>
+                        </tag>
+                    </tags>
+                    <triggers>
+                        <trigger>
+                            <uuid>dc2f66a7d0384c44bae2130fd501e3ef</uuid>
+                            <expression>last(/Template App Postfix by Zabbix agent/postfix[rejected])&gt;1000</expression>
+                            <name>High number of rejected messages on {HOST.NAME} ({ITEM.LASTVALUE})</name>
+                            <priority>WARNING</priority>
+                        </trigger>
+                    </triggers>
+                </item>
+                <item>
+                    <uuid>383aac1191fd45388a3f3da1acc67183</uuid>
+                    <name>Postfix Reject Warnings</name>
+                    <key>postfix[reject_warnings]</key>
+                    <delay>3m</delay>
+                    <history>30d</history>
+                    <trends>365d</trends>
+                    <units>messages</units>
+                    <tags>
+                        <tag>
+                            <tag>Application</tag>
+                            <value>Postfix</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>edc297dff2064cd795b39e9fdc1bbd8e</uuid>
+                    <name>Postfix Held</name>
+                    <key>postfix[held]</key>
+                    <delay>3m</delay>
+                    <history>30d</history>
+                    <trends>365d</trends>
+                    <units>messages</units>
+                    <tags>
+                        <tag>
+                            <tag>Application</tag>
+                            <value>Postfix</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>95e2ab2e29c840c092fd6eb9660125d5</uuid>
+                    <name>Postfix Discarded</name>
+                    <key>postfix[discarded]</key>
+                    <delay>3m</delay>
+                    <history>30d</history>
+                    <trends>365d</trends>
+                    <units>messages</units>
+                    <tags>
+                        <tag>
+                            <tag>Application</tag>
+                            <value>Postfix</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>030ffaa3929f4e8db197a2295eff3c86</uuid>
+                    <name>Postfix Bytes Received</name>
+                    <key>postfix[bytes_received]</key>
+                    <delay>3m</delay>
+                    <history>30d</history>
+                    <trends>365d</trends>
+                    <units>B</units>
+                    <tags>
+                        <tag>
+                            <tag>Application</tag>
+                            <value>Postfix</value>
+                        </tag>
+                    </tags>
+                </item>
+                <item>
+                    <uuid>f04b6d79cfa34ef4a6ee9b2b6947e59f</uuid>
+                    <name>Postfix Bytes Delivered</name>
+                    <key>postfix[bytes_delivered]</key>
+                    <delay>3m</delay>
+                    <history>30d</history>
+                    <trends>365d</trends>
+                    <units>B</units>
+                    <tags>
+                        <tag>
+                            <tag>Application</tag>
+                            <value>Postfix</value>
+                        </tag>
+                    </tags>
+                </item>
+            </items>
+            <graphs>
+                <graph>
+                    <uuid>7e7b113acf184d32a27d5878d499e3c2</uuid>
+                    <name>Postfix Message Flow</name>
+                    <graph_items>
+                        <graph_item>
+                            <color>00AA00</color>
+                            <item>
+                                <host>Template App Postfix by Zabbix agent</host>
+                                <key>postfix[received]</key>
+                            </item>
+                        </graph_item>
+                        <graph_item>
+                            <sortorder>1</sortorder>
+                            <color>0000AA</color>
+                            <item>
+                                <host>Template App Postfix by Zabbix agent</host>
+                                <key>postfix[delivered]</key>
+                            </item>
+                        </graph_item>
+                        <graph_item>
+                            <sortorder>2</sortorder>
+                            <color>AA0000</color>
+                            <item>
+                                <host>Template App Postfix by Zabbix agent</host>
+                                <key>postfix[rejected]</key>
+                            </item>
+                        </graph_item>
+                        <graph_item>
+                            <sortorder>3</sortorder>
+                            <color>FF8800</color>
+                            <item>
+                                <host>Template App Postfix by Zabbix agent</host>
+                                <key>postfix[deferred]</key>
+                            </item>
+                        </graph_item>
+                        <graph_item>
+                            <sortorder>4</sortorder>
+                            <color>AA00AA</color>
+                            <item>
+                                <host>Template App Postfix by Zabbix agent</host>
+                                <key>postfix[bounced]</key>
+                            </item>
+                        </graph_item>
+                    </graph_items>
+                </graph>
+                <graph>
+                    <uuid>c2e17d0ea6a64cfd8986ea700b7298cd</uuid>
+                    <name>Postfix Bytes Transferred</name>
+                    <graph_items>
+                        <graph_item>
+                            <color>00AA00</color>
+                            <item>
+                                <host>Template App Postfix by Zabbix agent</host>
+                                <key>postfix[bytes_received]</key>
+                            </item>
+                        </graph_item>
+                        <graph_item>
+                            <sortorder>1</sortorder>
+                            <color>0000AA</color>
+                            <item>
+                                <host>Template App Postfix by Zabbix agent</host>
+                                <key>postfix[bytes_delivered]</key>
+                            </item>
+                        </graph_item>
+                    </graph_items>
+                </graph>
+                <graph>
+                    <uuid>d36bfc80532645538ab23aa8b090a4ce</uuid>
+                    <name>Postfix Mail Queue</name>
+                    <graph_items>
+                        <graph_item>
+                            <color>EE0000</color>
+                            <item>
+                                <host>Template App Postfix by Zabbix agent</host>
+                                <key>postfix.pfmailq</key>
+                            </item>
+                        </graph_item>
+                    </graph_items>
+                </graph>
+                <graph>
+                    <uuid>c3d8b4851126409188d30024419f311b</uuid>
+                    <name>Postfix Rejected and Bounced</name>
+                    <graph_items>
+                        <graph_item>
+                            <color>AA0000</color>
+                            <item>
+                                <host>Template App Postfix by Zabbix agent</host>
+                                <key>postfix[rejected]</key>
+                            </item>
+                        </graph_item>
+                        <graph_item>
+                            <sortorder>1</sortorder>
+                            <color>FF8800</color>
+                            <item>
+                                <host>Template App Postfix by Zabbix agent</host>
+                                <key>postfix[reject_warnings]</key>
+                            </item>
+                        </graph_item>
+                        <graph_item>
+                            <sortorder>2</sortorder>
+                            <color>AA00AA</color>
+                            <item>
+                                <host>Template App Postfix by Zabbix agent</host>
+                                <key>postfix[bounced]</key>
+                            </item>
+                        </graph_item>
+                        <graph_item>
+                            <sortorder>3</sortorder>
+                            <color>0000AA</color>
+                            <item>
+                                <host>Template App Postfix by Zabbix agent</host>
+                                <key>postfix[discarded]</key>
+                            </item>
+                        </graph_item>
+                        <graph_item>
+                            <sortorder>4</sortorder>
+                            <color>888800</color>
+                            <item>
+                                <host>Template App Postfix by Zabbix agent</host>
+                                <key>postfix[held]</key>
+                            </item>
+                        </graph_item>
+                    </graph_items>
+                </graph>
+            </graphs>
+        </template>
+    </templates>
+    <value_maps>
+        <value_map>
+            <uuid>bf5b2cbe5ee44f2fb7293eee64aa12ad</uuid>
+            <name>Service state</name>
+            <mappings>
+                <mapping>
+                    <value>0</value>
+                    <newvalue>Down</newvalue>
+                </mapping>
+                <mapping>
+                    <value>1</value>
+                    <newvalue>Up</newvalue>
+                </mapping>
+            </mappings>
+        </value_map>
+    </value_maps>
+</zabbix_export>

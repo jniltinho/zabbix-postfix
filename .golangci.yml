@@ -1,0 +1,40 @@
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gofmt
+    - goimports
+    - gocritic
+    - revive
+    - misspell
+    - unconvert
+    - unparam
+
+linters-settings:
+  goimports:
+    local-prefixes: pygtail,pflogsumm,check_mailq
+  revive:
+    rules:
+      - name: exported
+        arguments:
+          - "checkPrivateReceivers"
+          - "sayRepetitiveInsteadOfStutters"
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck

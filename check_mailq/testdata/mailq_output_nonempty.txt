@@ -1,0 +1,11 @@
+-Queue ID-  --Size-- ----Arrival Time---- -Sender/Recipient-------
+A1B2C3D4E5F6      2048 Tue Jun 18 10:00:00  sender@example.com
+                                         recipient@example.com
+
+B2C3D4E5F6G7      1024 Tue Jun 18 10:01:00  other@example.com
+                                         dest@example.com
+
+C3D4E5F6G7H8       512 Tue Jun 18 10:02:00  third@example.com
+                                         target@example.com
+
+-- 3 Kbytes in 3 Requests.

@@ -1,0 +1,31 @@
+# Build artifacts (binaries compiled into dist/ inside each module)
+dist/
+*/bin/
+check_mailq/check_mailq
+pflogsumm/pflogsumm
+pygtail/pygtail
+
+# Legacy subdir (original repo clone, kept for LICENSE only)
+zabbix-postfix/
+
+# Go build cache
+*.test
+*.out
+
+# Offset files created by pygtail
+*.offset
+
+# Test data — drop real mail.log files here; never commit them
+testdata/*.log
+pygtail/testdata/*.log
+pflogsumm/testdata/*.log
+
+# AI tooling
+.agent/
+.claude
+.aider*
+.cursorrules
+
+# OS
+.DS_Store
+Thumbs.db

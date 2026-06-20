@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+
+      - name: Set timezone to America/Sao_Paulo
+        run: sudo timedatectl set-timezone America/Sao_Paulo
+      - name: Verify timezone change
+        run: timedatectl && date
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y upx
+
+      - name: Install Project Dependencies
+        run: make deps
+
+      - name: Build Binaries
+        run: make build
+
+      - name: Package Binaries
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          ARCHIVE_NAME="zabbix-postfix_${VERSION}_linux_amd64.tar.gz"
+          mkdir -p release
+          cp pygtail/dist/pygtail pflogsumm/dist/pflogsumm check_mailq/dist/check_mailq release/
+          tar -czvf "$ARCHIVE_NAME" -C release .
+          echo "ARCHIVE_NAME=$ARCHIVE_NAME" >> $GITHUB_ENV
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.ARCHIVE_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

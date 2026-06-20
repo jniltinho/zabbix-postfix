@@ -1,0 +1,29 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Postfix for mailq + Perl pflogsumm for golden comparison
+RUN apt-get update && apt-get install -y \
+    postfix \
+    mailutils \
+    pflogsumm \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Go binaries (built locally into dist/)
+COPY pygtail/dist/pygtail      /usr/local/bin/pygtail
+COPY pflogsumm/dist/pflogsumm  /usr/local/bin/pflogsumm
+COPY check_mailq/dist/check_mailq /usr/local/bin/check_mailq
+RUN chmod +x /usr/local/bin/pygtail /usr/local/bin/pflogsumm /usr/local/bin/check_mailq
+
+# Copy updated passive script
+COPY zabbix-postfix/zabbix_postfix_passive.sh /usr/local/sbin/zabbix_postfix_passive.sh
+RUN chmod +x /usr/local/sbin/zabbix_postfix_passive.sh
+
+# Copy mail.log fixture
+COPY pflogsumm/testdata/mail.log /var/log/mail.log
+
+# Copy validation script
+COPY validate-passive.sh /validate.sh
+RUN chmod +x /validate.sh
+
+CMD ["/validate.sh"]
