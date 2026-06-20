@@ -1,150 +1,116 @@
 # zabbix-postfix
 
-**Monitor Postfix in Zabbix — without Python or Perl on your mail server.**
-
-Drop-in replacement for the classic `pygtail.py` + Perl `pflogsumm` stack. Three small Go binaries, a ready-made Zabbix 6.0 template, and an installer that wires everything up on the agent host.
+**Monitor Postfix email traffic in Zabbix — without Python or Perl.**
 
 [![Release](https://img.shields.io/github/v/release/jniltinho/zabbix-postfix)](https://github.com/jniltinho/zabbix-postfix/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **New here?** Start with the **[HOWTO](./docs/HOWTO.md)** — step-by-step install, template import, and troubleshooting.
+![How it works](./docs/screenshots/how-it-works.jpg)
 
 ---
 
-## Why use this?
+## What it does
 
-If you run Postfix and Zabbix, you probably want message flow metrics — received, delivered, bounced, rejected, queue depth — without maintaining a fragile toolchain on every mail server.
-
-| Before | With zabbix-postfix |
-|--------|---------------------|
-| `apt install pflogsumm` + Python `pygtail.py` | Three static Go binaries (~1 MB each, UPX-compressed) |
-| Perl + Python runtime on the agent host | No interpreter dependencies |
-| Shell pipelines parsing `mailq` output | `check_mailq` returns a single integer |
-| Custom scripts to glue it all together | Installer + Zabbix template included |
-
-**Drop-in compatible** — same offset file, stats file format, and Zabbix item keys. Migrate from the Python/Perl setup without resetting counters or re-importing a different template.
-
----
-
-## What you get
-
-Import `template_postfix_passive.xml` and monitor:
+Installs three small Go binaries on your mail server and a ready-made template on
+Zabbix. Together they collect Postfix statistics every 1–3 minutes and display them
+as graphs and alerts — no configuration needed beyond `dpkg -i` or `rpm -i`.
 
 | Metric | What it tells you |
 |--------|-------------------|
 | Received / Delivered | Message throughput |
-| Deferred / Bounced / Rejected | Delivery problems and policy blocks |
+| Deferred / Bounced / Rejected | Delivery problems |
 | Bytes received / delivered | Traffic volume |
-| Mail queue depth | Backlog building up right now |
+| Mail queue depth | Backlog right now |
 | SMTP service state | Is Postfix accepting connections? |
 
-The template ships with **14 items**, **4 graphs**, and **4 triggers** (high queue, deferred spike, reject spike, SMTP down).
-
-![How it works](./docs/screenshots/how-it-works.jpg)
-
-*See also:*
-* [Zabbix-Postfix Integration Flow Diagram](./docs/screenshots/postfix_zabbix_flow.jpg)
-* [Postfix Mail Server Delivery Flow Diagram](./docs/screenshots/postfix_delivery_flow.jpg)
-* [Postfix Mail Server Statistics Overview (For Beginners)](./docs/screenshots/postfix_stats_infographic.jpg)
-* [Postfix Zabbix Agent Metrics Reference](./docs/screenshots/postfix_metrics_reference.jpg)
-
-Every 1–3 minutes the Zabbix server polls the agent. `postfix.update_data` tails the mail log incrementally (`pygtail → pflogsumm --zabbix`) and accumulates counters. `postfix[*]` reads a single metric from the stats file. `postfix.pfmailq` queries the live queue via `check_mailq`.
+Template ships with **14 items**, **4 graphs**, and **4 triggers**.
 
 ---
 
 ## Quick Start
 
-### Option A — Download pre-built binaries (fastest)
+### 1. Download the package for your distro
 
-Grab the latest release and install on your mail server:
+Go to the **[Releases page](https://github.com/jniltinho/zabbix-postfix/releases)**
+and download the file for your server:
 
+| Distro | File to download |
+|--------|-----------------|
+| Debian / Ubuntu | `zabbix-postfix_<version>_amd64.deb` |
+| RHEL / CentOS / Rocky / AlmaLinux | `zabbix-postfix-<version>-1.x86_64.rpm` |
+| Any Linux | `zabbix-postfix_<version>_pkg_linux_amd64.tar.gz` |
+
+### 2. Install on the mail server
+
+**.deb**
 ```bash
-VERSION=0.0.1   # or check https://github.com/jniltinho/zabbix-postfix/releases
-BASE="https://github.com/jniltinho/zabbix-postfix/releases/download/v${VERSION}"
-
-for bin in pygtail pflogsumm check_mailq; do
-  curl -fsSL "${BASE}/${bin}_${VERSION}_linux_amd64.tar.gz" | sudo tar -xz -C /usr/local/bin/
-done
+scp zabbix-postfix_*.deb mailserver:/tmp/
+sudo dpkg -i /tmp/zabbix-postfix_*.deb
 ```
 
-Then clone the repo on the mail server (for the installer and template) and run:
-
+**.rpm**
 ```bash
-git clone https://github.com/jniltinho/zabbix-postfix
-cd zabbix-postfix
-sudo bash install_postfix_template_zabbix_passive.sh
+scp zabbix-postfix-*.rpm mailserver:/tmp/
+sudo rpm -i /tmp/zabbix-postfix-*.rpm
 ```
 
-Import `template_postfix_passive.xml` in Zabbix Server and link it to your mail host. Full details in **[HOWTO.md](./docs/HOWTO.md)**.
-
-### Option B — Build from source
-
+**.tar.gz**
 ```bash
-git clone https://github.com/jniltinho/zabbix-postfix
-cd zabbix-postfix
-
-make build          # binaries in */dist/, compressed with UPX
-make test           # unit tests across all modules
-sudo make install   # installs to /usr/local/bin/
-sudo bash install_postfix_template_zabbix_passive.sh
+scp zabbix-postfix_*_pkg_linux_amd64.tar.gz mailserver:/tmp/
+mkdir -p /tmp/zabbix-postfix
+tar -xzf /tmp/zabbix-postfix_*_pkg_linux_amd64.tar.gz -C /tmp/zabbix-postfix
+sudo bash /tmp/zabbix-postfix/usr/share/zabbix-postfix/install.sh
 ```
 
-**Requirements:** Go ≥ 1.26.4, `make`, `upx`. Agent host needs Postfix, Zabbix Agent/Agent2, and `sudo`.
+The installer automatically detects your Zabbix agent, installs the config, adds
+the sudoers entry, and restarts the agent.
+
+### 3. Import the template in Zabbix
+
+1. **Configuration → Templates → Import**
+2. Upload `template_postfix_passive.xml`
+   (located at `/usr/share/zabbix-postfix/` after install)
+3. Link the template to your mail server host
+
+After a few minutes, **Monitoring → Latest data** will show `postfix.*` metrics.
 
 ---
 
-## Components
+## Verify it works
 
-| Module | Replaces | Role |
-|--------|----------|------|
-| [`pygtail`](./pygtail/) | `pygtail.py` | Incremental log reader with rotation and `.gz` support |
-| [`pflogsumm`](./pflogsumm/) | Perl `pflogsumm` | Log parser — human report by default, `--zabbix` for metrics |
-| [`check_mailq`](./check_mailq/) | `mailq \| grep` pipeline | Live queue depth as a raw integer |
+```bash
+zabbix_get -s 127.0.0.1 -k 'postfix.update_data'  # OK: statistics updated
+zabbix_get -s 127.0.0.1 -k 'postfix[received]'    # integer, e.g. 142178
+zabbix_get -s 127.0.0.1 -k 'postfix.pfmailq'      # integer, e.g. 11
+```
 
-**Deploy on the agent host:**
+---
 
-| File | Destination |
-|------|-------------|
-| `zabbix_postfix_passive.sh` | `/usr/local/sbin/` |
-| `zabbix_postfix_passive.conf` | `/etc/zabbix/zabbix_agent2.d/` |
-| `zabbix_postfix_passive` | `/etc/sudoers.d/` |
+## No toolchain required on the mail server
 
-**Import on Zabbix Server:**
+The three binaries are statically compiled and UPX-compressed (~1 MB each).
+No Go, Python, Perl, or any runtime dependency needed on the agent host.
 
-| File | Purpose |
-|------|---------|
+| What you get | Details |
+|--------------|---------|
+| `pygtail` | Reads new log lines since last run (survives log rotation) |
+| `pflogsumm` | Parses Postfix logs and outputs counters |
+| `check_mailq` | Returns live queue depth as a single integer |
+| `zabbix_postfix_passive.sh` | Orchestrates the three binaries for Zabbix |
 | `template_postfix_passive.xml` | Zabbix 6.0 template |
 
 ---
 
-## Module highlights
+## Don't have releases? Build with Docker
 
-- **[pygtail](./pygtail/README.md)** — offset file format identical to `pygtail.py` v0.11.1
-- **[pflogsumm](./pflogsumm/README.md)** — output matches Perl pflogsumm; `-d today|yesterday`, `--mailq`, and all compat flags accepted
-- **[check_mailq](./check_mailq/README.md)** — same count as `mailq | grep -v "Mail queue is empty" | grep -c '^[0-9A-Z]'`
-
----
-
-## Validate before you deploy
-
-Run the integration suite in Docker — no mail server required:
+No Go, UPX, or fpm needed — just Docker:
 
 ```bash
-make build
-docker build -f Dockerfile.test-passive -t zabbix-postfix-test .
-docker run --rm zabbix-postfix-test
-# Expected: Results: 19 passed, 0 failed
+git clone https://github.com/jniltinho/zabbix-postfix
+cd zabbix-postfix
+bash scripts/build-packages-docker.sh
+# packages written to dist/
 ```
-
----
-
-## Roadmap
-
-| Step | Status |
-|------|--------|
-| Go binaries | ✓ done — golden test matches Perl pflogsumm exactly |
-| Zabbix wiring | ✓ done — validated via Docker (19/19) |
-| Native Zabbix plugin | planned — `check_postfix` importing `pflogsumm/pkg/parser` |
 
 ---
 
@@ -152,11 +118,16 @@ docker run --rm zabbix-postfix-test
 
 | Doc | Contents |
 |-----|----------|
-| **[HOWTO.md](./docs/HOWTO.md)** | Full install guide, template import, troubleshooting, migration from Python/Perl |
-| **[Motivation](./docs/motivation.md)** | Why choose Go? Benefits over Perl/Python runtimes and impact on Zabbix metrics |
-| **[pygtail](./pygtail/README.md)** | Log tailing, offset files, rotation |
-| **[pflogsumm](./pflogsumm/README.md)** | Output modes, flags, examples |
-| **[check_mailq](./check_mailq/README.md)** | Queue counting |
+| **[HOWTO.md](./docs/HOWTO.md)** | Step-by-step install guide |
+| **[DEVELOPMENT.md](./docs/DEVELOPMENT.md)** | Build, test, release, advanced config |
+| **[Motivation](./docs/motivation.md)** | Why Go instead of Perl/Python |
+
+---
+
+## Migrating from Python/Perl?
+
+Drop-in compatible — same offset file, stats file format, and Zabbix item keys.
+No need to reset counters or re-import a different template.
 
 ---
 
