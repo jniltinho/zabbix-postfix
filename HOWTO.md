@@ -402,7 +402,92 @@ sudo systemctl restart zabbix-agent2
 
 ---
 
-## Part 11 — Migration from Python/Perl
+## Part 11 — Custom Binary Paths
+
+By default the installer places the Go binaries in `/usr/local/bin/`. If your server policy requires a different directory (e.g. `/opt/zabbix_bin/`), use `scripts/configure_paths.sh` to update all references after the binaries have been copied.
+
+### 11.1 Copy binaries to the custom directory
+
+```bash
+# Example: binaries in /opt/zabbix_bin
+sudo mkdir -p /opt/zabbix_bin
+sudo cp pygtail/dist/pygtail pflogsumm/dist/pflogsumm check_mailq/dist/check_mailq /opt/zabbix_bin/
+sudo chmod 0755 /opt/zabbix_bin/pygtail /opt/zabbix_bin/pflogsumm /opt/zabbix_bin/check_mailq
+```
+
+### 11.2 Run configure_paths.sh
+
+The script accepts two options:
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--bin-dir DIR` | `/usr/local/bin` | Directory where `pygtail`, `pflogsumm` and `check_mailq` live |
+| `--script-dir DIR` | `/usr/local/sbin` | Directory where `zabbix_postfix_passive.sh` is installed |
+
+It updates the installed `zabbix_postfix_passive.sh` and `zabbix_postfix_passive.conf` to point to the new directories, then restarts the Zabbix agent automatically.
+
+```bash
+# Binaries in /opt/zabbix_bin, shell script in default /usr/local/sbin
+sudo bash scripts/configure_paths.sh --bin-dir /opt/zabbix_bin
+
+# Both binaries and shell script in a custom directory
+sudo bash scripts/configure_paths.sh --bin-dir /opt/zabbix_bin --script-dir /opt/zabbix_bin
+```
+
+Expected output:
+
+```
+zabbix-postfix — configure paths
+  Binary dir : /opt/zabbix_bin
+  Script dir : /usr/local/sbin
+
+  [OK]   All three binaries found in /opt/zabbix_bin
+  [OK]   Updated PYGTAIL and PFLOGSUMM paths
+  [OK]   Updated check_mailq path
+  [OK]   zabbix-agent2 restarted
+
+Done. Verify with:
+  zabbix_get -s 127.0.0.1 -k 'postfix.update_data'
+  zabbix_get -s 127.0.0.1 -k 'postfix.pfmailq'
+```
+
+### 11.3 Manual steps (alternative)
+
+If you prefer not to use the script:
+
+```bash
+# 1. Edit the passive script — update PYGTAIL and PFLOGSUMM defaults
+sudo sed -i \
+  -e 's|PYGTAIL=\${ZABBIX_POSTFIX_PYGTAIL:-[^}]*}|PYGTAIL=${ZABBIX_POSTFIX_PYGTAIL:-/opt/zabbix_bin/pygtail}|' \
+  -e 's|PFLOGSUMM=\${ZABBIX_POSTFIX_PFLOGSUMM:-[^}]*}|PFLOGSUMM=${ZABBIX_POSTFIX_PFLOGSUMM:-/opt/zabbix_bin/pflogsumm}|' \
+  /usr/local/sbin/zabbix_postfix_passive.sh
+
+# 2. Edit the agent conf — update check_mailq path
+sudo sed -i \
+  's|UserParameter=postfix\.pfmailq,.*|UserParameter=postfix.pfmailq,/opt/zabbix_bin/check_mailq|' \
+  /etc/zabbix/zabbix_agent2.d/zabbix_postfix_passive.conf
+
+# 3. Restart agent
+sudo systemctl restart zabbix-agent2
+```
+
+### 11.4 Verify
+
+```bash
+zabbix_get -s 127.0.0.1 -k 'postfix.update_data'
+# Expected: OK: statistics updated
+
+zabbix_get -s 127.0.0.1 -k 'postfix.pfmailq'
+# Expected: integer
+
+# Confirm the script is using the right paths
+grep -E 'PYGTAIL|PFLOGSUMM' /usr/local/sbin/zabbix_postfix_passive.sh
+grep 'pfmailq' /etc/zabbix/zabbix_agent2.d/zabbix_postfix_passive.conf
+```
+
+---
+
+## Part 12 — Migration from Python/Perl
 
 If you were previously using `pygtail.py` and Perl `pflogsumm`:
 
