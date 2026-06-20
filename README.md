@@ -45,6 +45,7 @@ The template ships with **14 items**, **4 graphs**, and **4 triggers** (high que
 *See also:*
 * [Zabbix-Postfix Integration Flow Diagram](./docs/screenshots/postfix_zabbix_flow.jpg)
 * [Postfix Mail Server Delivery Flow Diagram](./docs/screenshots/postfix_delivery_flow.jpg)
+* [Postfix Mail Server Statistics Overview (For Beginners)](./docs/screenshots/postfix_stats_infographic.jpg)
 
 Every 1–3 minutes the Zabbix server polls the agent. `postfix.update_data` tails the mail log incrementally (`pygtail → pflogsumm --zabbix`) and accumulates counters. `postfix[*]` reads a single metric from the stats file. `postfix.pfmailq` queries the live queue via `check_mailq`.
 

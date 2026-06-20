@@ -25,3 +25,11 @@ Detailed diagram showing the interaction between the Zabbix Server/Agent, the he
 Internal email delivery flow in Postfix mapped against the respective metrics captured and sent to Zabbix (Received, Delivered, Rejected, Deferred, Queue Depth).
 
 ![Delivery Flow](./postfix_delivery_flow.jpg)
+
+---
+
+## 4. Postfix Mail Server Statistics Overview (For Beginners)
+
+A visual dashboard summarizing sample Postfix traffic stats (delivered, blocked, deferred, bounced, and volume) with friendly, non-technical explanations of each term.
+
+![Statistics Overview](./postfix_stats_infographic.jpg)
