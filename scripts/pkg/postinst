@@ -2,7 +2,7 @@
 set -e
 
 CONF_SRC="/usr/share/zabbix-postfix/zabbix_postfix_passive.conf"
-SUDOERS_LINE="zabbix ALL=(ALL) NOPASSWD: /usr/local/sbin/zabbix_postfix_passive.sh"
+SUDOERS_LINE="zabbix ALL=(ALL) NOPASSWD: /opt/zabbix_postfix/zabbix_postfix_passive.sh"
 
 # Detect Zabbix agent conf dir (agent2 → agentd.conf.d → agentd.d)
 ZBX_CONF_DIR=""

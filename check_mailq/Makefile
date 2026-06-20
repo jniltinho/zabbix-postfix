@@ -1,6 +1,6 @@
 BINARY    := check_mailq
 DIST_DIR  := dist
-INSTALL_DIR := /usr/local/bin
+INSTALL_DIR := /opt/zabbix_postfix
 
 .PHONY: build test install clean
 

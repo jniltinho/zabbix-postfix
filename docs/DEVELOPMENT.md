@@ -48,9 +48,9 @@ not the raw total.
 ### UserParameters
 
 ```
-UserParameter=postfix.pfmailq,/usr/local/bin/check_mailq --zabbix
-UserParameter=postfix[*],sudo /usr/local/sbin/zabbix_postfix_passive.sh $1
-UserParameter=postfix.update_data,sudo /usr/local/sbin/zabbix_postfix_passive.sh
+UserParameter=postfix.pfmailq,/opt/zabbix_postfix/check_mailq --zabbix
+UserParameter=postfix[*],sudo /opt/zabbix_postfix/zabbix_postfix_passive.sh $1
+UserParameter=postfix.update_data,sudo /opt/zabbix_postfix/zabbix_postfix_passive.sh
 ```
 
 ### Runtime files
@@ -266,12 +266,12 @@ Override paths at runtime without reinstalling — useful for testing:
 
 ```bash
 # Use a different log file (e.g. rotated)
-sudo MAILLOG=/var/log/mail.log.1 /usr/local/sbin/zabbix_postfix_passive.sh
+sudo MAILLOG=/var/log/mail.log.1 /opt/zabbix_postfix/zabbix_postfix_passive.sh
 
 # Use different binaries
 ZABBIX_POSTFIX_PFLOGSUMM=/tmp/pflogsumm_new \
 ZABBIX_POSTFIX_PYGTAIL=/tmp/pygtail_new \
-  sudo -E /usr/local/sbin/zabbix_postfix_passive.sh
+  sudo -E /opt/zabbix_postfix/zabbix_postfix_passive.sh
 ```
 
 ### Manual installation (without a package manager)
@@ -279,17 +279,17 @@ ZABBIX_POSTFIX_PYGTAIL=/tmp/pygtail_new \
 ```bash
 # 1. Install binaries
 sudo install -m 0755 pygtail/dist/pygtail pflogsumm/dist/pflogsumm \
-  check_mailq/dist/check_mailq /usr/local/bin/
+  check_mailq/dist/check_mailq /opt/zabbix_postfix/
 
 # 2. Install passive script
-sudo install -m 0755 zabbix_postfix_passive.sh /usr/local/sbin/
+sudo install -m 0755 zabbix_postfix_passive.sh /opt/zabbix_postfix/
 
 # 3. Install agent UserParameter conf
 sudo install -m 0644 zabbix_postfix_passive.conf \
   /etc/zabbix/zabbix_agent2.d/     # or zabbix_agentd.conf.d/
 
 # 4. Add sudoers entry
-echo 'zabbix ALL=(ALL) NOPASSWD: /usr/local/sbin/zabbix_postfix_passive.sh' \
+echo 'zabbix ALL=(ALL) NOPASSWD: /opt/zabbix_postfix/zabbix_postfix_passive.sh' \
   | sudo EDITOR='tee -a' visudo
 
 # 5. Restart agent
@@ -312,10 +312,10 @@ sudo rpm -e zabbix-postfix
 
 **Manual**
 ```bash
-sudo rm -f /usr/local/bin/pygtail \
-           /usr/local/bin/pflogsumm \
-           /usr/local/bin/check_mailq \
-           /usr/local/sbin/zabbix_postfix_passive.sh \
+sudo rm -f /opt/zabbix_postfix/pygtail \
+           /opt/zabbix_postfix/pflogsumm \
+           /opt/zabbix_postfix/check_mailq \
+           /opt/zabbix_postfix/zabbix_postfix_passive.sh \
            /etc/zabbix/zabbix_agent2.d/zabbix_postfix_passive.conf
 sudo sed -i '/zabbix_postfix_passive/d' /etc/sudoers
 sudo systemctl restart zabbix-agent2

@@ -17,7 +17,7 @@ the same flags and output format for the Postfix MTA.
 
 ```bash
 make build          # produces dist/check_mailq
-sudo make install   # installs to /usr/local/bin/check_mailq
+sudo make install   # installs to /opt/zabbix_postfix/check_mailq
 ```
 
 ```bash
@@ -88,7 +88,7 @@ $ check_mailq --zabbix
 Zabbix configuration:
 
 ```
-UserParameter=postfix.pfmailq,/usr/local/bin/check_mailq --zabbix
+UserParameter=postfix.pfmailq,/opt/zabbix_postfix/check_mailq --zabbix
 ```
 
 ---
@@ -123,7 +123,7 @@ Nagios / Icinga configuration example:
 ```
 define command {
     command_name  check_postfix_mailq
-    command_line  /usr/local/bin/check_mailq -w $ARG1$ -c $ARG2$
+    command_line  /opt/zabbix_postfix/check_mailq -w $ARG1$ -c $ARG2$
 }
 ```
 
@@ -187,7 +187,7 @@ zabbix ALL=(root) NOPASSWD: /usr/sbin/mailq
 Then use `--sudo` in the UserParameter:
 
 ```
-UserParameter=postfix.pfmailq,/usr/local/bin/check_mailq --zabbix --sudo
+UserParameter=postfix.pfmailq,/opt/zabbix_postfix/check_mailq --zabbix --sudo
 ```
 
 ---

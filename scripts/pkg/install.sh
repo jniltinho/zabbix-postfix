@@ -7,14 +7,14 @@
 #
 # Options:
 #   --bin-dir DIR     Install binaries (pygtail, pflogsumm, check_mailq) to DIR
-#                     Default: /usr/local/bin
+#                     Default: /opt/zabbix_postfix
 #   --script-dir DIR  Install zabbix_postfix_passive.sh to DIR
-#                     Default: /usr/local/sbin
+#                     Default: /opt/zabbix_postfix
 
 set -e
 
-BIN_DIR="/usr/local/bin"
-SCRIPT_DIR="/usr/local/sbin"
+BIN_DIR="/opt/zabbix_postfix"
+SCRIPT_DIR="/opt/zabbix_postfix"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -34,8 +34,8 @@ fi
 SELF_DIR="$(cd "$(dirname "$0")" && pwd)"
 EXTRACT_ROOT="$(cd "${SELF_DIR}/../../.." && pwd)"
 
-SRC_BIN="${EXTRACT_ROOT}/usr/local/bin"
-SRC_SBIN="${EXTRACT_ROOT}/usr/local/sbin"
+SRC_BIN="${EXTRACT_ROOT}/opt/zabbix_postfix"
+SRC_SBIN="${EXTRACT_ROOT}/opt/zabbix_postfix"
 SRC_SHARE="${EXTRACT_ROOT}/usr/share/zabbix-postfix"
 DEST_SHARE="/usr/share/zabbix-postfix"
 

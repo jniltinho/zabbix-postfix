@@ -41,10 +41,10 @@ FPM_ARGS=(
     --before-remove "scripts/pkg/prerm"
     --package "${DIST_DIR}/"
     --force
-    "pygtail/dist/pygtail=/usr/local/bin/pygtail"
-    "pflogsumm/dist/pflogsumm=/usr/local/bin/pflogsumm"
-    "check_mailq/dist/check_mailq=/usr/local/bin/check_mailq"
-    "zabbix_postfix_passive.sh=/usr/local/sbin/zabbix_postfix_passive.sh"
+    "pygtail/dist/pygtail=/opt/zabbix_postfix/pygtail"
+    "pflogsumm/dist/pflogsumm=/opt/zabbix_postfix/pflogsumm"
+    "check_mailq/dist/check_mailq=/opt/zabbix_postfix/check_mailq"
+    "zabbix_postfix_passive.sh=/opt/zabbix_postfix/zabbix_postfix_passive.sh"
     "zabbix_postfix_passive.conf=/usr/share/zabbix-postfix/zabbix_postfix_passive.conf"
     "template_postfix_passive.xml=/usr/share/zabbix-postfix/template_postfix_passive.xml"
 )

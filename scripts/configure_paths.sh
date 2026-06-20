@@ -6,9 +6,9 @@
 #
 # Options:
 #   --bin-dir DIR     Directory where pygtail, pflogsumm and check_mailq live
-#                     Default: /usr/local/bin
+#                     Default: /opt/zabbix_postfix
 #   --script-dir DIR  Directory where zabbix_postfix_passive.sh is installed
-#                     Default: /usr/local/sbin
+#                     Default: /opt/zabbix_postfix
 #   -h, --help        Show this help
 
 set -euo pipefail
@@ -24,8 +24,8 @@ fail() { echo -e "  [${RED}FAIL${COL_RESET}] $*"; exit 1; }
 info() { echo -e "  [${YELLOW}..${COL_RESET}]  $*"; }
 
 # ---------- defaults ----------
-BIN_DIR="/usr/local/bin"
-SCRIPT_DIR="/usr/local/sbin"
+BIN_DIR="/opt/zabbix_postfix"
+SCRIPT_DIR="/opt/zabbix_postfix"
 
 # ---------- parse args ----------
 while [[ $# -gt 0 ]]; do

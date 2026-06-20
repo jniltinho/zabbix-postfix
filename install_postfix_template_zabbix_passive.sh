@@ -30,7 +30,7 @@ fi
 
 # --- Check Go binaries ---
 echo -e "\nChecking Go binary dependencies..."
-GO_BINS=( "/usr/local/bin/pygtail" "/usr/local/bin/pflogsumm" "/usr/local/bin/check_mailq" )
+GO_BINS=( "/opt/zabbix_postfix/pygtail" "/opt/zabbix_postfix/pflogsumm" "/opt/zabbix_postfix/check_mailq" )
 missing=0
 for bin in "${GO_BINS[@]}"; do
     printf "  %-40s" "${bin}"
@@ -54,8 +54,8 @@ echo -e "${OK_HIGHLIGHT}All Go binaries found.${COL_ESCAPE}\n"
 SCRIPT_SRC="$(dirname "$0")/zabbix_postfix_passive.sh"
 [ -f "./zabbix_postfix_passive.sh" ] && SCRIPT_SRC="./zabbix_postfix_passive.sh"
 
-printf "  Installing /usr/local/sbin/zabbix_postfix_passive.sh ... "
-if install -m 0755 "${SCRIPT_SRC}" /usr/local/sbin/zabbix_postfix_passive.sh; then
+printf "  Installing /opt/zabbix_postfix/zabbix_postfix_passive.sh ... "
+if install -m 0755 "${SCRIPT_SRC}" /opt/zabbix_postfix/zabbix_postfix_passive.sh; then
     echo -e "[${GREEN}OK${COL_ESCAPE}]"
 else
     echo -e "[${RED}FAILED${COL_ESCAPE}]"
@@ -95,7 +95,7 @@ if [ -n "${zbx_conf_dir}" ]; then
 fi
 
 # --- Sudoers ---
-SUDOERS_LINE="zabbix ALL=(ALL) NOPASSWD: /usr/local/sbin/zabbix_postfix_passive.sh"
+SUDOERS_LINE="zabbix ALL=(ALL) NOPASSWD: /opt/zabbix_postfix/zabbix_postfix_passive.sh"
 printf "  Configuring sudoers ... "
 if grep -qF "${SUDOERS_LINE}" /etc/sudoers 2>/dev/null; then
     echo -e "[${GREEN}ALREADY SET${COL_ESCAPE}]"

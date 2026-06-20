@@ -6,8 +6,8 @@
 [ -f /var/log/maillog ] && MAILLOG=/var/log/maillog
 
 # Go binary paths — override via env for testing
-PYGTAIL=${ZABBIX_POSTFIX_PYGTAIL:-/usr/local/bin/pygtail}
-PFLOGSUMM=${ZABBIX_POSTFIX_PFLOGSUMM:-/usr/local/bin/pflogsumm}
+PYGTAIL=${ZABBIX_POSTFIX_PYGTAIL:-/opt/zabbix_postfix/pygtail}
+PFLOGSUMM=${ZABBIX_POSTFIX_PFLOGSUMM:-/opt/zabbix_postfix/pflogsumm}
 
 PFOFFSETFILE=/tmp/zabbix-postfix-passive-offset.dat
 PFSTATSFILE=/tmp/zabbix-postfix-passive-statsfile.dat

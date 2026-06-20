@@ -89,12 +89,12 @@ Mail server (Zabbix agent host)
 -------------------------------
   1. Copy this folder to the mail server, e.g. /tmp/zabbix-postfix-install
   2. Install binaries:
-       sudo install -m 0755 bin/pygtail bin/pflogsumm bin/check_mailq /usr/local/bin/
+       sudo install -m 0755 bin/pygtail bin/pflogsumm bin/check_mailq /opt/zabbix_postfix/
   3. Run the agent installer (from this directory):
        cd /tmp/zabbix-postfix-install
        sudo bash install_postfix_template_zabbix_passive.sh
   4. Verify:
-       /usr/local/bin/pygtail --version
+       /opt/zabbix_postfix/pygtail --version
        zabbix_get -s 127.0.0.1 -k 'postfix.update_data'
 
 Zabbix server

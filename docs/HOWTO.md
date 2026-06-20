@@ -114,7 +114,7 @@ sudo zabbix_agent2 -t postfix.update_data
 
 **Binaries not found**
 ```bash
-ls -lh /usr/local/bin/pygtail /usr/local/bin/pflogsumm /usr/local/bin/check_mailq
+ls -lh /opt/zabbix_postfix/pygtail /opt/zabbix_postfix/pflogsumm /opt/zabbix_postfix/check_mailq
 ```
 
 **Mail log not readable**

@@ -24,7 +24,7 @@ Go was designed by Google for building fast, reliable, and efficient system infr
 ### 1. Single Static Binaries
 Go compiles all code and dependencies into a single, statically linked executable.
 * **Zero external dependencies:** No Python, Perl, or extra libraries are required on the mail server OS.
-* **Simplified Deployment:** Just copy the executable to `/usr/local/bin/` and you're good to go.
+* **Simplified Deployment:** Just copy the executable to `/opt/zabbix_postfix/` and you're good to go.
 * **UPX Compression:** The binaries are compressed to around ~1 MB in size, ideal for lightweight infrastructure.
 
 ### 2. High Performance & Low Resource Footprint
