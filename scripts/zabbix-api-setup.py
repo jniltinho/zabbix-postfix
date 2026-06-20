@@ -168,8 +168,8 @@ def step_script(zbx: ZabbixAPI, group_id: str) -> None:
         "type":        "0",   # script (bash)
         "execute_on":  "0",   # Zabbix agent
         "description": (
-            "Resets the pygtail offset to the end of mail.log and clears the stats file. "
-            "Use when Postfix counters accumulate historical data on first collection."
+            "Clears the Postfix stats cache so the next poll rebuilds today's totals from scratch. "
+            "Use when you want to force an immediate reset of all Postfix counters."
         ),
         "groupid":     group_id,
         "usrgrpid":    "7",   # Zabbix administrators

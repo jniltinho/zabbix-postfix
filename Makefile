@@ -1,4 +1,4 @@
-MODULES     := pygtail pflogsumm check_mailq
+MODULES     := pflogsumm check_mailq
 INSTALL_DIR := /opt/zabbix_postfix
 HOST        ?= mx01
 VERSION     ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "0.0.0")
@@ -46,8 +46,7 @@ deps:
 
 fetch-testdata:
 	@echo "Fetching mail.log from $(HOST)..."
-	scp $(HOST):/var/log/mail.log pygtail/testdata/mail.log
-	cp pygtail/testdata/mail.log pflogsumm/testdata/mail.log
+	scp $(HOST):/var/log/mail.log pflogsumm/testdata/mail.log
 	@echo "Done. Run 'make test' or 'go test -tags integration ./...' inside each module."
 
 deb: build

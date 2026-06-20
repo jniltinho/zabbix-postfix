@@ -5,7 +5,7 @@
 #   sudo ./configure_paths.sh --bin-dir DIR [--script-dir DIR]
 #
 # Options:
-#   --bin-dir DIR     Directory where pygtail, pflogsumm and check_mailq live
+#   --bin-dir DIR     Directory where pflogsumm and check_mailq live
 #                     Default: /opt/zabbix_postfix
 #   --script-dir DIR  Directory where zabbix_postfix_passive.sh is installed
 #                     Default: /opt/zabbix_postfix
@@ -53,12 +53,12 @@ fi
 
 # ---------- check binaries ----------
 info "Checking binaries in ${BIN_DIR}..."
-for bin in pygtail pflogsumm check_mailq; do
+for bin in pflogsumm check_mailq; do
     if [[ ! -x "${BIN_DIR}/${bin}" ]]; then
         fail "${BIN_DIR}/${bin} not found or not executable"
     fi
 done
-ok "All three binaries found in ${BIN_DIR}"
+ok "All binaries found in ${BIN_DIR}"
 
 # ---------- update zabbix_postfix_passive.sh ----------
 if [[ ! -f "${SCRIPT_FILE}" ]]; then
@@ -67,10 +67,9 @@ fi
 
 info "Updating ${SCRIPT_FILE}..."
 sed -i \
-    -e "s|PYGTAIL=\${ZABBIX_POSTFIX_PYGTAIL:-[^}]*}|PYGTAIL=\${ZABBIX_POSTFIX_PYGTAIL:-${BIN_DIR}/pygtail}|" \
     -e "s|PFLOGSUMM=\${ZABBIX_POSTFIX_PFLOGSUMM:-[^}]*}|PFLOGSUMM=\${ZABBIX_POSTFIX_PFLOGSUMM:-${BIN_DIR}/pflogsumm}|" \
     "${SCRIPT_FILE}"
-ok "Updated PYGTAIL and PFLOGSUMM paths"
+ok "Updated PFLOGSUMM path"
 
 # ---------- detect zabbix agent conf dir ----------
 ZBX_CONF_FILE=""

@@ -32,7 +32,7 @@ FPM_ARGS=(
     --name "${PKG_NAME}"
     --version "${VERSION}"
     --architecture "${ARCH}"
-    --description "Postfix monitoring for Zabbix — pygtail, pflogsumm and check_mailq (Go binaries)"
+    --description "Postfix monitoring for Zabbix — pflogsumm and check_mailq (Go binaries)"
     --maintainer "Nilton OS <jniltinho@gmail.com>"
     --url "https://github.com/jniltinho/zabbix-postfix"
     --license "MIT"
@@ -41,7 +41,6 @@ FPM_ARGS=(
     --before-remove "scripts/pkg/prerm"
     --package "${DIST_DIR}/"
     --force
-    "pygtail/dist/pygtail=/opt/zabbix_postfix/pygtail"
     "pflogsumm/dist/pflogsumm=/opt/zabbix_postfix/pflogsumm"
     "check_mailq/dist/check_mailq=/opt/zabbix_postfix/check_mailq"
     "zabbix_postfix_passive.sh=/opt/zabbix_postfix/zabbix_postfix_passive.sh"

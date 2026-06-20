@@ -29,15 +29,12 @@ WORKDIR /src
 
 # Download deps first (cache-friendly layer)
 COPY Makefile ./
-COPY pygtail/go.mod pygtail/go.sum pygtail/
 COPY pflogsumm/go.mod pflogsumm/go.sum pflogsumm/
 COPY check_mailq/go.mod check_mailq/go.sum check_mailq/
 
-RUN cd pygtail && go mod download && \
-    cd ../pflogsumm && go mod download && \
+RUN cd pflogsumm && go mod download && \
     cd ../check_mailq && go mod download
 
-COPY pygtail/ pygtail/
 COPY pflogsumm/ pflogsumm/
 COPY check_mailq/ check_mailq/
 
@@ -57,7 +54,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /src
 
 # Copy everything needed by build-package.sh and fpm
-COPY --from=builder /src/pygtail/dist/pygtail       pygtail/dist/pygtail
 COPY --from=builder /src/pflogsumm/dist/pflogsumm   pflogsumm/dist/pflogsumm
 COPY --from=builder /src/check_mailq/dist/check_mailq check_mailq/dist/check_mailq
 COPY Makefile ./
@@ -76,7 +72,6 @@ RUN mkdir -p dist && \
 
 # ── export stage: binaries only ──────────────────────────────────────────────
 FROM scratch AS export-bins
-COPY --from=builder /src/pygtail/dist/pygtail       /pygtail
 COPY --from=builder /src/pflogsumm/dist/pflogsumm   /pflogsumm
 COPY --from=builder /src/check_mailq/dist/check_mailq /check_mailq
 

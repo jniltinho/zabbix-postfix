@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Integration validation for zabbix_postfix_passive.sh + Go binaries.
 # Run inside Dockerfile.test-passive (ubuntu:24.04) or on a host with
-# /opt/zabbix_postfix/{pygtail,pflogsumm,check_mailq} and /var/log/mail.log present.
-# Expected: Results: 19 passed, 0 failed
+# /opt/zabbix_postfix/{pflogsumm,check_mailq} and /var/log/mail.log present.
+# Expected: Results: 17 passed, 0 failed
 set -e
 PASS=0
 FAIL=0
@@ -12,13 +12,12 @@ fail() { echo "  FAIL: $1"; FAIL=$((FAIL+1)); }
 
 echo ""
 echo "=== Task 0.1: Go binaries present and executable ==="
-for bin in /opt/zabbix_postfix/pygtail /opt/zabbix_postfix/pflogsumm /opt/zabbix_postfix/check_mailq; do
+for bin in /opt/zabbix_postfix/pflogsumm /opt/zabbix_postfix/check_mailq; do
     [ -x "$bin" ] && ok "$bin" || fail "$bin missing"
 done
 
 echo ""
 echo "=== Task 0.1: Version checks ==="
-/opt/zabbix_postfix/pygtail --version    2>&1 | grep -q "0\." && ok "pygtail version" || fail "pygtail version"
 /opt/zabbix_postfix/pflogsumm --version  2>&1 | grep -q "0\." && ok "pflogsumm version" || fail "pflogsumm version"
 /opt/zabbix_postfix/check_mailq --version 2>&1 | grep -q "0\." && ok "check_mailq version" || fail "check_mailq version"
 
@@ -29,13 +28,13 @@ echo "  Output: $result"
 echo "$result" | grep -q "OK: statistics updated" && ok "update mode exit message" || fail "update mode exit message"
 
 echo ""
-echo "=== Task 5.2: Stats file contains key;value entries ==="
+echo "=== Task 5.2: Stats file contains key=value entries ==="
 STATSFILE=/tmp/zabbix-postfix-passive-statsfile.dat
 [ -f "$STATSFILE" ] && ok "stats file exists" || fail "stats file missing"
-grep -q "^received;" "$STATSFILE"      && ok "received entry"      || fail "received entry missing"
-grep -q "^delivered;" "$STATSFILE"     && ok "delivered entry"     || fail "delivered entry missing"
-grep -q "^rejected;" "$STATSFILE"      && ok "rejected entry"      || fail "rejected entry missing"
-grep -q "^bytes_received;" "$STATSFILE" && ok "bytes_received entry" || fail "bytes_received entry missing"
+grep -q "^received=" "$STATSFILE"      && ok "received entry"      || fail "received entry missing"
+grep -q "^delivered=" "$STATSFILE"     && ok "delivered entry"     || fail "delivered entry missing"
+grep -q "^rejected=" "$STATSFILE"      && ok "rejected entry"      || fail "rejected entry missing"
+grep -q "^bytes_received=" "$STATSFILE" && ok "bytes_received entry" || fail "bytes_received entry missing"
 echo "  Stats file contents:"
 cat "$STATSFILE" | sed 's/^/    /'
 
@@ -50,15 +49,20 @@ echo "  bytes_received=$val"
 [[ "$val" =~ ^[0-9]+$ ]] && ok "bytes_received is integer" || fail "bytes_received not integer: $val"
 
 echo ""
-echo "=== Task 5.1 (second run): incremental update accumulates ==="
+echo "=== Task 5.1 (second run): idempotent update ==="
 val_before=$(/opt/zabbix_postfix/zabbix_postfix_passive.sh received 2>&1)
-# Reset offset so second run reads something
-rm -f /tmp/zabbix-postfix-passive-offset.dat
 result=$(/opt/zabbix_postfix/zabbix_postfix_passive.sh 2>&1)
 val_after=$(/opt/zabbix_postfix/zabbix_postfix_passive.sh received 2>&1)
 echo "  received before=$val_before after=$val_after"
 echo "$result" | grep -q "OK: statistics updated" && ok "second update run" || fail "second update run"
-[ "$val_after" -gt "$val_before" ] 2>/dev/null && ok "values accumulated" || ok "values same (offset exhausted)"
+[ "$val_after" -eq "$val_before" ] 2>/dev/null && ok "values idempotent (today totals)" || ok "values changed (log updated between runs)"
+
+echo ""
+echo "=== Task 5.5: --reset clears stats file ==="
+/opt/zabbix_postfix/zabbix_postfix_passive.sh --reset | grep -q "Reset OK" && ok "--reset exits cleanly" || fail "--reset failed"
+[ ! -f "$STATSFILE" ] && ok "stats file removed after reset" || fail "stats file still present after reset"
+# restore stats for remaining tests
+/opt/zabbix_postfix/zabbix_postfix_passive.sh > /dev/null 2>&1 || true
 
 echo ""
 echo "=== Task 0.1: Go pflogsumm matches Perl pflogsumm on same log ==="

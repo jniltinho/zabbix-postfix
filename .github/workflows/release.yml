@@ -45,7 +45,7 @@ jobs:
         run: |
           VERSION=${{ steps.version.outputs.VERSION }}
           mkdir -p dist
-          for BIN in pygtail pflogsumm check_mailq; do
+          for BIN in pflogsumm check_mailq; do
             mkdir -p "release/${BIN}"
             cp "${BIN}/dist/${BIN}" "release/${BIN}/"
             tar -czvf "dist/${BIN}_${VERSION}_linux_amd64.tar.gz" -C "release/${BIN}" .
@@ -74,7 +74,6 @@ jobs:
         with:
           files: |
             dist/zabbix-postfix*.tar.gz
-            dist/pygtail_*_linux_amd64.tar.gz
             dist/pflogsumm_*_linux_amd64.tar.gz
             dist/check_mailq_*_linux_amd64.tar.gz
             dist/zabbix-postfix_*.deb

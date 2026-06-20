@@ -30,7 +30,7 @@ fi
 
 # --- Check Go binaries ---
 echo -e "\nChecking Go binary dependencies..."
-GO_BINS=( "/opt/zabbix_postfix/pygtail" "/opt/zabbix_postfix/pflogsumm" "/opt/zabbix_postfix/check_mailq" )
+GO_BINS=( "/opt/zabbix_postfix/pflogsumm" "/opt/zabbix_postfix/check_mailq" )
 missing=0
 for bin in "${GO_BINS[@]}"; do
     printf "  %-40s" "${bin}"
