@@ -22,6 +22,7 @@ pflogsumm/testdata/*.log
 
 # AI tooling
 .agent/
+openspec/
 .claude
 .aider*
 .cursorrules

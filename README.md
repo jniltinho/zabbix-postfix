@@ -7,7 +7,7 @@ Drop-in replacement for the classic `pygtail.py` + Perl `pflogsumm` stack. Three
 [![Release](https://img.shields.io/github/v/release/jniltinho/zabbix-postfix)](https://github.com/jniltinho/zabbix-postfix/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **New here?** Start with the **[HOWTO](./HOWTO.md)** — step-by-step install, template import, and troubleshooting.
+> **New here?** Start with the **[HOWTO](./docs/HOWTO.md)** — step-by-step install, template import, and troubleshooting.
 
 ---
 
@@ -42,6 +42,10 @@ The template ships with **14 items**, **4 graphs**, and **4 triggers** (high que
 
 ![How it works](./docs/screenshots/how-it-works.png)
 
+*See also:*
+* [Zabbix-Postfix Integration Flow Diagram](./docs/screenshots/postfix_zabbix_flow.jpg)
+* [Postfix Mail Server Delivery Flow Diagram](./docs/screenshots/postfix_delivery_flow.jpg)
+
 Every 1–3 minutes the Zabbix server polls the agent. `postfix.update_data` tails the mail log incrementally (`pygtail → pflogsumm --zabbix`) and accumulates counters. `postfix[*]` reads a single metric from the stats file. `postfix.pfmailq` queries the live queue via `check_mailq`.
 
 ---
@@ -69,7 +73,7 @@ cd zabbix-postfix
 sudo bash install_postfix_template_zabbix_passive.sh
 ```
 
-Import `template_postfix_passive.xml` in Zabbix Server and link it to your mail host. Full details in **[HOWTO.md](./HOWTO.md)**.
+Import `template_postfix_passive.xml` in Zabbix Server and link it to your mail host. Full details in **[HOWTO.md](./docs/HOWTO.md)**.
 
 ### Option B — Build from source
 
@@ -146,7 +150,8 @@ docker run --rm zabbix-postfix-test
 
 | Doc | Contents |
 |-----|----------|
-| **[HOWTO.md](./HOWTO.md)** | Full install guide, template import, troubleshooting, migration from Python/Perl |
+| **[HOWTO.md](./docs/HOWTO.md)** | Full install guide, template import, troubleshooting, migration from Python/Perl |
+| **[Motivation](./docs/motivation.md)** | Why choose Go? Benefits over Perl/Python runtimes and impact on Zabbix metrics |
 | **[pygtail](./pygtail/README.md)** | Log tailing, offset files, rotation |
 | **[pflogsumm](./pflogsumm/README.md)** | Output modes, flags, examples |
 | **[check_mailq](./check_mailq/README.md)** | Queue counting |
