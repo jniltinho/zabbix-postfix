@@ -4,41 +4,47 @@ This directory contains the architecture and data flow diagrams for the `zabbix-
 
 ---
 
-## 1. General Operation (Macro View)
+## 1. Zabbix Postfix Agent Architecture
 
-A beginner-friendly (layman) macro-view diagram showing how the Zabbix Server periodically interacts with the Zabbix Agent on the mail server, detailing how the active configuration file routes requests to update log statistics, read metrics from the cache, or check the mail queue depth.
+Detailed component diagram showing the main pieces involved in monitoring: the Postfix processes and files on the mail server (smtpd, cleanup, qmgr, mail.log, queue directory), the Zabbix Agent layer (bash wrapper script, pflogsumm Go binary and the local stats cache file), and the Zabbix Server performing passive checks.
 
-![General Operation](./how-it-works.jpg)
-
----
-
-## 2. Zabbix-Postfix Integration Flow
-
-Detailed diagram showing the interaction between the Zabbix Server/Agent, the helper Bash script, and the Go binary (`pflogsumm`) to read log statistics and check the mail queue depth.
-
-![Integration Flow](./postfix_zabbix_flow.jpg)
+![Zabbix Postfix Agent Architecture](./postfix_agent_architecture.jpg)
 
 ---
 
-## 3. Postfix Mail Server Delivery Flow
+## 2. Postfix Email Lifecycle with Monitoring Points
 
-Internal email delivery flow in Postfix mapped against the respective metrics captured and sent to Zabbix (Received, Delivered, Rejected, Deferred, Queue Depth).
+Wide 16:9 diagram illustrating the complete journey of an email through Postfix (7 stages from submission to final status) and highlighting exactly which metrics (`postfix[received]`, `postfix[deferred]`, `postfix[delivered]`, etc.) are captured at each step.
 
-![Delivery Flow](./postfix_delivery_flow.jpg)
-
----
-
-## 4. Postfix Mail Server Statistics Overview (For Beginners)
-
-A visual dashboard summarizing sample Postfix traffic stats (delivered, blocked, deferred, bounced, and volume) with friendly, non-technical explanations of each term.
-
-![Statistics Overview](./postfix_stats_infographic.jpg)
+![Postfix Email Lifecycle with Monitoring Points](./postfix_email_lifecycle.jpg)
 
 ---
 
-## 5. Postfix Zabbix Agent Metrics Reference
+## 3. Postfix Metrics Collection Cycle
 
-A comprehensive visual reference diagram showing all 11 Postfix metrics captured by the agent, grouped logically (Inbound/Delivery, Queue & Problem, Rejections & Drops, and Traffic Volume) with their keys, units, and descriptions.
+End-to-end pipeline that explains how raw Postfix log data becomes Zabbix metrics: from the agent trigger, through incremental log reading, pflogsumm parsing, stats extraction, local cache file, Zabbix server fetch, and finally storage in the database and UI.
 
-![Metrics Reference](./postfix_metrics_reference.jpg)
+![Postfix Metrics Collection Cycle](./postfix_metrics_collection_cycle.jpg)
 
+---
+
+## 4. Postfix Zabbix Metrics by Category
+
+Clean reference chart that groups all captured Postfix metrics into four logical categories:
+
+- Inbound & Delivery
+- Queue & Latency
+- Rejections & Drops
+- Traffic Volume
+
+Each metric shows its key name, unit and description.
+
+![Postfix Zabbix Metrics by Category](./postfix_metrics_by_category.jpg)
+
+---
+
+## 5. Postfix Problem Detection and Alerting Flow
+
+Flowchart that contrasts the healthy operations path with common problem scenarios. It shows how metric thresholds cause Zabbix triggers to fire, create Problems, and lists practical remediation actions for high deferred queue, rejection spikes, bounces, and queue buildup.
+
+![Postfix Problem Detection and Alerting Flow](./postfix_alerting_flow.jpg)
