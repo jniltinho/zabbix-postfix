@@ -63,7 +63,7 @@
                     <triggers>
                         <trigger>
                             <uuid>413c27176cf646e7812bf587bb52400b</uuid>
-                            <expression>last(/Template App Postfix by Zabbix agent/postfix.pfmailq)&gt;100</expression>
+                            <expression>last(/Template App Postfix by Zabbix agent/postfix.pfmailq)&gt;{$POSTFIX_MAILQ_WARN}</expression>
                             <name>Postfix mail queue is high on {HOST.NAME} ({ITEM.LASTVALUE})</name>
                             <priority>WARNING</priority>
                         </trigger>
@@ -146,7 +146,7 @@
                     <triggers>
                         <trigger>
                             <uuid>353892744a2e47e0877cdb5faa9304fd</uuid>
-                            <expression>last(/Template App Postfix by Zabbix agent/postfix[deferred])&gt;50</expression>
+                            <expression>last(/Template App Postfix by Zabbix agent/postfix[deferred])&gt;{$POSTFIX_DEFERRED_WARN}</expression>
                             <name>High number of deferred messages on {HOST.NAME} ({ITEM.LASTVALUE})</name>
                             <priority>WARNING</priority>
                         </trigger>
@@ -184,7 +184,7 @@
                     <triggers>
                         <trigger>
                             <uuid>dc2f66a7d0384c44bae2130fd501e3ef</uuid>
-                            <expression>last(/Template App Postfix by Zabbix agent/postfix[rejected])&gt;1000</expression>
+                            <expression>last(/Template App Postfix by Zabbix agent/postfix[rejected])&gt;{$POSTFIX_REJECTED_WARN}</expression>
                             <name>High number of rejected messages on {HOST.NAME} ({ITEM.LASTVALUE})</name>
                             <priority>WARNING</priority>
                         </trigger>
@@ -266,6 +266,23 @@
                     </tags>
                 </item>
             </items>
+            <macros>
+                <macro>
+                    <macro>{$POSTFIX_MAILQ_WARN}</macro>
+                    <value>100</value>
+                    <description>Mail queue depth warning threshold</description>
+                </macro>
+                <macro>
+                    <macro>{$POSTFIX_DEFERRED_WARN}</macro>
+                    <value>50</value>
+                    <description>Deferred messages warning threshold</description>
+                </macro>
+                <macro>
+                    <macro>{$POSTFIX_REJECTED_WARN}</macro>
+                    <value>1000</value>
+                    <description>Rejected messages warning threshold</description>
+                </macro>
+            </macros>
             <valuemaps>
                 <valuemap>
                     <uuid>bf5b2cbe5ee44f2fb7293eee64aa12ad</uuid>
